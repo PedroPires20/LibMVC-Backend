@@ -29,6 +29,15 @@ export default class DatabaseDriver {
         }
     }
 
+    public copy() {
+        let driverCopy = new DatabaseDriver(this._serverAddress, this._serverPort, this._databaseName);
+        driverCopy._mongoClient = this._mongoClient;
+        driverCopy._isConnected = this._isConnected;
+        driverCopy._activeCollectionName = this._activeCollectionName;
+        driverCopy._activeCollection = this._activeCollection;
+        return driverCopy;
+    }
+
     public listCollections() {
         if(!this._isConnected) {
             throw new DriverNotConnected(this._connectionString);
