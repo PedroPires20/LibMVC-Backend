@@ -7,8 +7,8 @@ export class DatabaseConnectionError extends ApiError {
 }
 
 export class DatabaseError extends ApiError {
-    constructor(connectionString: string, errorMessage: string) {
-        super(`The MongoDB server at "${connectionString}" encountered the following error:\n${errorMessage}`, 500, "DatabaseDriver");
+    constructor(connectionString: string, errorMessage: string, module = "DatabaseDriver", collection = "") {
+        super(`${errorMessage}\nMongoDB server: "${connectionString}"\nActive collection: "${collection}"`, 500, module);
     }
 }
 
