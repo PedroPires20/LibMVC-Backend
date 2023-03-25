@@ -6,10 +6,10 @@ export interface ModelSchema {
     _id: ObjectId;
 }
 
-type ExcludeId<Schema extends ModelSchema> = Omit<Schema, "_id">;
+export type ExcludeId<Schema extends ModelSchema> = Omit<Schema, "_id">;
 
 export abstract class Model<Schema extends ModelSchema> {
-    public static async addNew(modelCollection: DatabaseDriver, newInstanceData: any) {
+    protected static async addNew(modelCollection: DatabaseDriver, newInstanceData: any) {
         let insertResult: InsertOneResult;
         try {
             insertResult = await modelCollection.insertOne(newInstanceData);
@@ -97,7 +97,7 @@ export abstract class Model<Schema extends ModelSchema> {
         return Object.keys(this._changeSet).length > 0;
     }
 
-    private _collection: DatabaseDriver;
-    private _id: ObjectId;
+    protected _collection: DatabaseDriver;
     protected _changeSet: Partial<ExcludeId<Schema>>;
+    private _id: ObjectId;
 }
