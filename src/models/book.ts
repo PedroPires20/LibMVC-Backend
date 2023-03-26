@@ -21,6 +21,8 @@ interface BookSchema extends ModelSchema {
 
 type BookQueryFilter = Filter<ExcludeId<BookSchema>>;
 
+type BookFieldNames = keyof ExcludeId<BookSchema>;
+
 export default class Book extends Model<BookSchema> {
     private constructor(modelCollection: DatabaseDriver, bookData: BookSchema) {
         super(modelCollection, bookData._id);
@@ -91,6 +93,10 @@ export default class Book extends Model<BookSchema> {
         }, options).map((bookData) => new Book(
             this._modelCollection, bookData as BookSchema)
         ).toArray();
+    }
+
+    public static async getAllFieldValues(fieldName: BookFieldNames) {
+        return this._modelCollection.distinct(fieldName);
     }
 
     public get isbn() {
