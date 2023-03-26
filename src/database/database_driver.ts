@@ -92,6 +92,16 @@ export default class DatabaseDriver {
         return this._activeCollection.findOne.bind(this._activeCollection);
     }
 
+    public get distinct() {
+        if(!this._isConnected) {
+            throw new DriverNotConnected(this._connectionString);
+        }
+        if(!this._activeCollection) {
+            throw new NoActiveCollection(this._connectionString);
+        }
+        return this._activeCollection.distinct.bind(this._activeCollection);
+    }
+
     public get insertOne() {
         if(!this._isConnected) {
             throw new DriverNotConnected(this._connectionString);
