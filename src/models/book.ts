@@ -99,6 +99,26 @@ export default class Book extends Model<BookSchema> {
         return this._modelCollection.distinct(fieldName);
     }
 
+    public override async reload() {
+        try {
+            let updatedData = await Book._modelCollection.findOne({ _id: this.id }) as BookSchema;
+            this._isbn = updatedData.isbn;
+            this._title = updatedData.title;
+            this._author = updatedData.author;
+            this._categories = updatedData.categories;
+            this._publisher = updatedData.publisher;
+            this._edition = updatedData.edition;
+            this._format = updatedData.format;
+            this._date = updatedData.date;
+            this._pages = updatedData.pages;
+            this._copies = updatedData.copies;
+            this._description = updatedData.description;
+            this._location = updatedData.location;
+        }catch(exception: any) {
+            throw new ModelError(this.constructor.name, COLLECTION_NAME, `Failed to reload the model instance data! The following exception was encountered: ${exception}`);
+        }
+    }
+
     public get isbn() {
         this._changeSet
         return this._isbn;

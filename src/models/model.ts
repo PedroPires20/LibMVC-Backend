@@ -85,6 +85,8 @@ export abstract class Model<Schema extends ModelSchema> {
             this._changeSet = {};
         }
     }
+
+    public abstract reload(): Promise<void>;
     
     public async delete() {
         await Model.deleteById(this._collection, this._id);
