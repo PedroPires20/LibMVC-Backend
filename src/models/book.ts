@@ -40,8 +40,8 @@ export default class Book extends Model<BookSchema> {
         this._location = bookData.location;
     }
 
-    public static initializeModel(databaseConnection: DatabaseDriver) {
-        this._modelCollection = databaseConnection.copy();
+    public static initializeModel(dbServerAddress: string, dbServerPort: number, dbName: string) {
+        this._modelCollection = new DatabaseDriver(dbServerAddress, dbServerPort, dbName);
         this._modelCollection.activeCollection = COLLECTION_NAME;
     }
 
