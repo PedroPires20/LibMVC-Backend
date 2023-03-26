@@ -10,6 +10,12 @@ export interface ModelSchema {
 export type ExcludeId<Schema extends ModelSchema> = Omit<Schema, "_id">;
 
 export abstract class Model<Schema extends ModelSchema> {
+    protected constructor(modelCollection: DatabaseDriver, id: ObjectId) {
+        this._id = id;
+        this._changeSet = {};
+        this._collection = modelCollection;
+    }
+
     protected static async addNew(modelCollection: DatabaseDriver, newInstanceData: any) {
         let insertResult: InsertOneResult;
         try {
@@ -54,13 +60,7 @@ export abstract class Model<Schema extends ModelSchema> {
             );
         }
     }
-
-    protected constructor(modelCollection: DatabaseDriver, id: ObjectId) {
-        this._id = id;
-        this._changeSet = {};
-        this._collection = modelCollection;
-    }
-
+    
     public async commitChanges() {
         if(this.wasEdited) {
             let updateResult: UpdateResult;
