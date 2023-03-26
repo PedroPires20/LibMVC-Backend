@@ -1,5 +1,6 @@
 import { ObjectId, InsertOneResult, DeleteResult, UpdateResult } from "mongodb";
 import DatabaseDriver from "database/database_driver";
+import { ApiError } from "helpers/error_handlers";
 import { DatabaseError } from "database/driver_exceptions";
 
 export interface ModelSchema {
@@ -100,4 +101,10 @@ export abstract class Model<Schema extends ModelSchema> {
     protected _collection: DatabaseDriver;
     protected _changeSet: Partial<ExcludeId<Schema>>;
     private _id: ObjectId;
+}
+
+export class ModelError extends ApiError {
+    constructor(modelName: string, modelCollection: string, errorMessage: string, statusCode = 500) {
+        super(`An error was encountered on the ${modelName} model (collection "${modelCollection}"): ${errorMessage}`, statusCode, modelName);
+    }
 }
