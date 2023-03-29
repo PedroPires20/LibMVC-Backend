@@ -16,6 +16,18 @@ export abstract class Model<Schema extends ModelSchema> {
         this._collection = modelCollection;
     }
 
+    public static isValidId(id: string | number | ObjectId) {
+        return ObjectId.isValid(id);
+    }
+
+    public static getIdFromString(id: string) {
+        return new ObjectId(id);
+    }
+
+    public static getIdFromHexString(id: string) {
+        return ObjectId.createFromHexString(id);
+    }
+
     protected static async addNew(modelCollection: DatabaseDriver, newInstanceData: any) {
         let insertResult: InsertOneResult;
         try {
