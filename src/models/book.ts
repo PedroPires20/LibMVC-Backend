@@ -1,5 +1,5 @@
 import { ObjectId, Filter, FindOptions, Document } from "mongodb";
-import DatabaseDriver from "database/database_driver";
+import DatabaseDriver from "../database/database_driver";
 import { Model, ModelSchema, ExcludeId, ModelError } from "./model";
 
 const COLLECTION_NAME = "books";

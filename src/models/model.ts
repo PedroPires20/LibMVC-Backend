@@ -1,7 +1,7 @@
 import { ObjectId, InsertOneResult, DeleteResult, UpdateResult } from "mongodb";
-import DatabaseDriver from "database/database_driver";
-import { ApiError } from "helpers/error_handlers";
-import { DatabaseError } from "database/driver_exceptions";
+import DatabaseDriver from "../database/database_driver";
+import { ApiError } from "../helpers/error_handlers";
+import { DatabaseError } from "../database/driver_exceptions";
 
 export interface ModelSchema {
     _id: ObjectId;
