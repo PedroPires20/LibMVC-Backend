@@ -4,7 +4,7 @@ import { Model, ModelSchema, ExcludeId, ModelError } from "./model";
 
 const COLLECTION_NAME = "books";
 
-interface BookSchema extends ModelSchema {
+export interface BookSchema extends ModelSchema {
     isbn: string,
     title: string,
     author: string,
@@ -98,6 +98,24 @@ export default class Book extends Model<BookSchema> {
     public static async getAllFieldValues(fieldName: BookFieldNames) {
         return this._modelCollection.distinct(fieldName);
     }
+
+    public override getAllFields(): BookSchema {
+        return {
+            _id: this.id,
+            isbn: this._isbn,
+            title: this._title,
+            author: this._author,
+            categories: this._categories,
+            publisher: this._publisher,
+            edition: this._edition,
+            format: this._format,
+            date: this._date,
+            pages: this._pages,
+            copies: this._copies,
+            description: this._description,
+            location: this._location
+        };
+    } 
 
     public override async reload() {
         try {

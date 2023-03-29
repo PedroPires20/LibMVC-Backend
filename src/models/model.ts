@@ -98,6 +98,8 @@ export abstract class Model<Schema extends ModelSchema> {
         }
     }
 
+    public abstract getAllFields(): ModelSchema;
+
     public abstract reload(): Promise<void>;
     
     public async delete() {
