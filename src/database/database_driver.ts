@@ -14,7 +14,7 @@ export default class DatabaseDriver {
 
     public async connect() {
         try {
-            this._mongoClient.connect();
+            await this._mongoClient.connect();
             this._isConnected = true;
         }catch(exception: any) {
             throw new DatabaseConnectionError(this._serverAddress, this._serverPort, exception.message);
