@@ -1,6 +1,6 @@
 import { ObjectId, Filter, FindOptions, Document } from "mongodb";
 import DatabaseDriver from "../database/database_driver";
-import { Model, ModelSchema, ExcludeId, ModelError } from "./model";
+import { Model, ModelSchema, ExcludeId, ModelError, SortBySchema } from "./model";
 
 const COLLECTION_NAME = "books";
 
@@ -77,8 +77,21 @@ export default class Book extends Model<BookSchema> {
         return new Book(this._modelCollection, resultData as BookSchema);
     }
 
-    public static async runQuery(filter: BookQueryFilter = {}, options?: FindOptions) {
-        return this._modelCollection.find(filter as Filter<Document>, options).map(
+    public static async runQuery(
+        filter: BookQueryFilter = {},
+        skip = 0,
+        limit = 0,
+        sortBy?: SortBySchema<BookSchema>,
+        options?: FindOptions
+    ) {
+        let cursor = this._modelCollection.find(
+            filter as Filter<Document>,
+            options
+        ).skip(skip).limit(limit);
+        if(sortBy) {
+            cursor.sort(sortBy);
+        }
+        return cursor.map(
             (bookData) => new Book(this._modelCollection, bookData as BookSchema)
         ).toArray();
     }
