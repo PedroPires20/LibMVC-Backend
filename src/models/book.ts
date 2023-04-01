@@ -1,4 +1,5 @@
 import { ObjectId, Filter, FindOptions, Document } from "mongodb";
+import { z } from "zod";
 import DatabaseDriver from "../database/database_driver";
 import { Model, ModelSchema, ExcludeId, ModelError, SortBySchema } from "./model";
 
@@ -49,6 +50,42 @@ export default class Book extends Model<BookSchema> {
     public static async createBook(newBookData: ExcludeId<BookSchema>) {
         let newBookId = await super.addNew(this._modelCollection, newBookData);
         return new Book(this._modelCollection, { _id: newBookId, ...newBookData });
+    }
+
+    public static validateSchema(targetObject: any): targetObject is ExcludeId<BookSchema> {
+        const bookSchemaValidator = z.object({
+            isbn: z.string().nonempty(),
+            title: z.string().nonempty(),
+            author: z.string().nonempty(),
+            categories: z.array(z.string().nonempty()),
+            publisher: z.string(),
+            edition: z.string(),
+            format: z.string(),
+            date: z.string(),
+            pages: z.number().int().nonnegative(),
+            copies: z.number().int().nonnegative(),
+            description: z.string(),
+            location: z.string()
+        });
+        return bookSchemaValidator.safeParse(targetObject).success;
+    }
+
+    public static validateUpdateSchema(targetObject: any): targetObject is ExcludeId<BookSchema> {
+        const bookSchemaValidator = z.object({
+            isbn: z.string().nonempty().optional(),
+            title: z.string().nonempty().optional(),
+            author: z.string().nonempty().optional(),
+            categories: z.array(z.string().nonempty()).optional(),
+            publisher: z.string().optional(),
+            edition: z.string().optional(),
+            format: z.string().optional(),
+            date: z.string().optional(),
+            pages: z.number().int().nonnegative().optional(),
+            copies: z.number().int().nonnegative().optional(),
+            description: z.string().optional(),
+            location: z.string().optional()
+        });
+        return bookSchemaValidator.safeParse(targetObject).success;
     }
 
     public static async getBookById(id: ObjectId) {
