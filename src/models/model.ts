@@ -74,6 +74,10 @@ export abstract class Model<Schema extends ModelSchema> {
             );
         }
     }
+
+    public updateFields(updatedValues: Partial<Schema>) {
+        this._changeSet = updatedValues;
+    }
     
     public async commitChanges() {
         if(this.wasEdited) {
