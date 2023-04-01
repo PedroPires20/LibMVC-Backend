@@ -77,7 +77,7 @@ export default class Book extends Model<BookSchema> {
         return new Book(this._modelCollection, resultData as BookSchema);
     }
 
-    public static async runQuery(
+    public static async queryBooks(
         filter: BookQueryFilter = {},
         skip = 0,
         limit = 0,
