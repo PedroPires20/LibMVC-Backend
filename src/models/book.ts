@@ -150,6 +150,10 @@ export default class Book extends Model<BookSchema> {
         return this._modelCollection.distinct(fieldName);
     }
 
+    public static async deleteBookById(id: ObjectId) {
+        await this.deleteById(this._modelCollection, id);
+    }
+
     public override getAllFields(): BookSchema {
         return {
             _id: this.id,

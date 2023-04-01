@@ -53,7 +53,7 @@ export abstract class Model<Schema extends ModelSchema> {
         return insertResult.insertedId;
     }
 
-    public static async deleteById(modelCollection: DatabaseDriver, documentId: ObjectId) {
+    protected static async deleteById(modelCollection: DatabaseDriver, documentId: ObjectId) {
         let deleteResult: DeleteResult;
         try {
             deleteResult = await modelCollection.deleteOne({ _id: documentId });
