@@ -146,7 +146,7 @@ export default class Book extends Model<BookSchema> {
         ).toArray();
     }
 
-    public static async getAllFieldValues(fieldName: BookFieldNames) {
+    public static async getDistinctFieldValues(fieldName: BookFieldNames) {
         return this._modelCollection.distinct(fieldName);
     }
 
@@ -193,7 +193,6 @@ export default class Book extends Model<BookSchema> {
     }
 
     public get isbn() {
-        this._changeSet
         return this._isbn;
     }
 
