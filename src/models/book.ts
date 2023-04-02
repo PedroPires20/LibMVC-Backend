@@ -1,4 +1,4 @@
-import { ObjectId, Filter, FindOptions, Document } from "mongodb";
+import { ObjectId, Filter, FindOptions, Document, UpdateFilter } from "mongodb";
 import { z } from "zod";
 import DatabaseDriver from "../database/database_driver";
 import { Model, ModelSchema, ExcludeId, ModelError, SortBySchema } from "./model";
@@ -170,7 +170,31 @@ export default class Book extends Model<BookSchema> {
             description: this._description,
             location: this._location
         };
-    } 
+    }
+
+    public override async updateFields(updatedValues: UpdateFilter<BookSchema>) {
+        let updateResult = await this._collection.findOneAndUpdate(
+            { _id: this.id },
+            updatedValues as UpdateFilter<Document>,
+            { returnDocument: "after" }
+        );
+        if(!updateResult.ok || updateResult.value == null) {
+            throw new ModelError("Book", "", "");
+        }
+        let updatedData = updateResult.value as BookSchema;
+        this._isbn = updatedData.isbn;
+        this._title = updatedData.title;
+        this._author = updatedData.author;
+        this._categories = updatedData.categories;
+        this._publisher = updatedData.publisher;
+        this._edition = updatedData.edition;
+        this._format = updatedData.format;
+        this._date = updatedData.date;
+        this._pages = updatedData.pages;
+        this._copies = updatedData.copies;
+        this._description = updatedData.description;
+        this._location = updatedData.location;
+    }
 
     public override async reload() {
         try {

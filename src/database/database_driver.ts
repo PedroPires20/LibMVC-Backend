@@ -133,6 +133,16 @@ export default class DatabaseDriver {
         return this._activeCollection.updateMany.bind(this._activeCollection);
     }
 
+    public get findOneAndUpdate() {
+        if(!this._isConnected) {
+            throw new DriverNotConnected(this._connectionString);
+        }
+        if(!this._activeCollection) {
+            throw new NoActiveCollection(this._connectionString);
+        }
+        return this._activeCollection.findOneAndUpdate.bind(this._activeCollection);
+    }
+
     public get deleteOne() {
         if(!this._isConnected) {
             throw new DriverNotConnected(this._connectionString);

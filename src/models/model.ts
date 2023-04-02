@@ -1,4 +1,4 @@
-import { ObjectId, InsertOneResult, DeleteResult, UpdateResult } from "mongodb";
+import { ObjectId, InsertOneResult, DeleteResult, UpdateResult, UpdateFilter } from "mongodb";
 import DatabaseDriver from "../database/database_driver";
 import { ApiError } from "../helpers/error_handlers";
 import { DatabaseError } from "../database/driver_exceptions";
@@ -75,9 +75,7 @@ export abstract class Model<Schema extends ModelSchema> {
         }
     }
 
-    public updateFields(updatedValues: Partial<Schema>) {
-        this._changeSet = updatedValues;
-    }
+    public abstract updateFields(updatedValues: UpdateFilter<Schema>): Promise<void>;
     
     public async commitChanges() {
         if(this.wasEdited) {
