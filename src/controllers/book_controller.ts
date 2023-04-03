@@ -164,9 +164,10 @@ export default class BookController extends Controller {
         request: HandlerTypes.CreateBook.Request,
         response: HandlerTypes.CreateBook.Response
     ) {
-        if(!Book.validateSchema(request.body)) {
+        let validationResult = Book.validateSchema(request.body);
+        if(!validationResult.isValid) {
             throw new ApiError(
-                `The data provided for the creation of the new book is invalid! The data does not follow the Book schema.`,
+                `The data provided for the creation of the new book is invalid! The following inconsistencies where found: ${validationResult.errorMessage}`,
                 400,
                 "BookController"
             );
@@ -188,9 +189,10 @@ export default class BookController extends Controller {
         }
         let id = Book.getIdFromString(request.params.id);
         let book = await Book.getBookById(id);
-        if(!Book.validateUpdateSchema(request.body)) {
+        let validationResult = Book.validateUpdateSchema(request.body);
+        if(!validationResult.isValid) {
             throw new ApiError(
-                `The provided updated data is invalid! The fields doesn't follow the Book schema.`,
+                `The provided updated data is invalid! The following inconsistencies where encountered on the fields: ${validationResult.errorMessage}`,
                 400,
                 "BookController"
             );

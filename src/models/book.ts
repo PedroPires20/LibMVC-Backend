@@ -1,7 +1,7 @@
 import { ObjectId, Filter, FindOptions, Document, UpdateFilter } from "mongodb";
 import { z } from "zod";
 import DatabaseDriver from "../database/database_driver";
-import { Model, ModelSchema, ExcludeId, ModelError, SortBySchema } from "./model";
+import { Model, ModelSchema, SchemaValidationResult, ExcludeId, ModelError, SortBySchema } from "./model";
 
 const COLLECTION_NAME = "books";
 
@@ -52,7 +52,7 @@ export default class Book extends Model<BookSchema> {
         return new Book(this._modelCollection, { _id: newBookId, ...newBookData });
     }
 
-    public static validateSchema(targetObject: any): targetObject is ExcludeId<BookSchema> {
+    public static validateSchema(targetObject: any): SchemaValidationResult {
         const bookSchemaValidator = z.object({
             isbn: z.string().nonempty(),
             title: z.string().nonempty(),
@@ -67,10 +67,14 @@ export default class Book extends Model<BookSchema> {
             description: z.string(),
             location: z.string()
         });
-        return bookSchemaValidator.safeParse(targetObject).success;
+        let parseResult = bookSchemaValidator.safeParse(targetObject);
+        if(!parseResult.success) {
+            return { isValid: false, errorMessage: parseResult.error.format().toString() };    
+        }
+        return { isValid: true };
     }
 
-    public static validateUpdateSchema(targetObject: any): targetObject is ExcludeId<BookSchema> {
+    public static validateUpdateSchema(targetObject: any): SchemaValidationResult {
         const bookSchemaValidator = z.object({
             isbn: z.string().nonempty().optional(),
             title: z.string().nonempty().optional(),
@@ -85,7 +89,11 @@ export default class Book extends Model<BookSchema> {
             description: z.string().optional(),
             location: z.string().optional()
         });
-        return bookSchemaValidator.safeParse(targetObject).success;
+        let parseResult = bookSchemaValidator.safeParse(targetObject);
+        if(!parseResult.success) {
+            return { isValid: false, errorMessage: parseResult.error.format().toString() };    
+        }
+        return { isValid: true };
     }
 
     public static async getBookById(id: ObjectId) {
