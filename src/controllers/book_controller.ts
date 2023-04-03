@@ -1,7 +1,10 @@
 import { Controller, DatabaseSettings, HttpMethod } from "./controller";
 import { HandlerTypes } from "./book_controller_types";
-import Book from "../models/book";
+import Book, { BookQueryFilter } from "../models/book";
 import { ApiError } from "../helpers/error_handlers";
+
+const DEFAULT_BOOKS_PER_PAGE = 10;
+
 
 export default class BookController extends Controller {
     constructor(databaseConfiguration: DatabaseSettings) {
@@ -28,8 +31,6 @@ export default class BookController extends Controller {
         request: HandlerTypes.ListBooks.Request,
         response: HandlerTypes.ListBooks.Response
     ) {
-        const DEFAULT_BOOKS_PER_PAGE = 10;
-
         let booksToSkip: number;
         let limit: number;
         if(request.query.page) {
@@ -41,7 +42,10 @@ export default class BookController extends Controller {
                     "BookController"
                 );
             }
-            if(typeof request.body.booksPerPage !== "number" || request.body.booksPerPage <= 0) {
+            if(
+                request.body.booksPerPage &&
+                (typeof request.body.booksPerPage !== "number" || request.body.booksPerPage <= 0)
+            ) {
                 throw new ApiError(
                     `An invalid value was provided to the booksPerPage property! The booksPerPage property must be a positive integer (got value {${request.body.booksPerPage}} of type "${typeof request.body.booksPerPage}").`,
                     400,
@@ -54,7 +58,7 @@ export default class BookController extends Controller {
         }else {
             booksToSkip = limit = 0;
         }
-        if(!request.body.sortBy && typeof request.body.sortBy !== "object") {
+        if(request.body.sortBy && typeof request.body.sortBy !== "object") {
             throw new ApiError(
                 `The sort by property, if provided, must be a valid object. The provided value was of type "${typeof request.body.sortBy}".`,
                 400,
@@ -62,6 +66,97 @@ export default class BookController extends Controller {
             );
         }
         let books = await Book.queryBooks({}, booksToSkip, limit, request.body.sortBy);
+        response.status(200).json(books.map(book => book.getAllFields()));
+    }
+
+    public async searchBooks(
+        request: HandlerTypes.SearchBooks.Request,
+        response: HandlerTypes.SearchBooks.Response
+    ) {
+        let booksToSkip: number;
+        let limit: number;
+        if(request.query.page) {
+            let page = parseInt(request.query.page);
+            if(isNaN(page) || page <= 0) {
+                throw new ApiError(
+                    `An invalid value was provided to the pages parameter! The number of pages must be a positive integer (got value {${request.query.page}} of type "${typeof request.query.page}").`,
+                    400,
+                    "BookController"
+                );
+            }
+            if(
+                request.body.booksPerPage &&
+                (typeof request.body.booksPerPage !== "number" || request.body.booksPerPage <= 0)
+            ) {
+                throw new ApiError(
+                    `An invalid value was provided to the booksPerPage property! The booksPerPage property must be a positive integer (got value {${request.body.booksPerPage}} of type "${typeof request.body.booksPerPage}").`,
+                    400,
+                    "BookController"
+                )
+            }
+            let booksPerPage = request.body.booksPerPage || DEFAULT_BOOKS_PER_PAGE;
+            booksToSkip = (page - 1) * booksPerPage;
+            limit = booksPerPage;
+        }else {
+            booksToSkip = limit = 0;
+        }
+        if(request.body.sortBy && typeof request.body.sortBy !== "object") {
+            throw new ApiError(
+                `The sort by property, if provided, must be a valid object. The provided value was of type "${typeof request.body.sortBy}".`,
+                400,
+                "BookController"
+            );
+        }
+        if(request.body.filters) {
+            if(typeof request.body.sortBy !== "object") {
+                throw new ApiError(
+                    `The filters property, if provided, must be a valid object. The provided value was of type "${typeof request.body.sortBy}".`,
+                    400,
+                    "BookController"
+                );
+            }
+            for(const field of Object.keys(request.body.filters)) {
+                type CategoriesFields = keyof typeof request.body.filters;
+                if(field === "categories") {
+                    if(request.body.filters.categories &&
+                        !Array.isArray(request.body.filters.categories)) {
+                            throw new ApiError(
+                                `The filters "categories" field, if provided, must be an array of strings. The provided value was of type "${typeof request.body.filters?.categories}".`,
+                                400,
+                                "BookController"
+                            );
+                    }
+                }else if(
+                    request.body.filters[field as CategoriesFields] &&
+                    typeof request.body.filters[field as CategoriesFields] !== "string"
+                ) {
+                    throw new ApiError(
+                        `The filters "${field}" field, if provided, must be a non-empty string. The provided value was of type "${typeof request.body.filters[field as CategoriesFields]}".`,
+                        400,
+                        "BookController"
+                    );
+                }
+            }
+        }
+        let filter = request.body.filters as BookQueryFilter;
+        if(filter.categories) {
+            filter.categories = { "$all": filter.categories } as any;
+        }
+        let books: Book[];
+        if(!request.query.query) {
+            books = await Book.queryBooks(
+                request.body.filters,
+                booksToSkip,
+                limit,
+                request.body.sortBy
+            );
+        }else {    
+            books = await Book.textSearch(
+                request.query.query,
+                request.body.filters,
+                { skip: booksToSkip, limit: limit, sort: request.body.sortBy }
+            );
+        }
         response.status(200).json(books.map(book => book.getAllFields()));
     }
 
@@ -81,8 +176,8 @@ export default class BookController extends Controller {
     }
 
     public async updateBook(
-        request: HandlerTypes.UpdateBook.Request,
-        response: HandlerTypes.UpdateBook.Response
+        request: HandlerTypes.UpdateBooks.Request,
+        response: HandlerTypes.UpdateBooks.Response
     ) {
         if(!Book.isValidId(request.params.id)) {
             throw new ApiError(
@@ -138,10 +233,11 @@ export default class BookController extends Controller {
     }
 
     protected _initializeRoutes() {
-       this._registerRoute(HttpMethod.GET, "/:id", this.getBookById);
-       this._registerRoute(HttpMethod.GET, "/", this.listBooks);
-       this._registerRoute(HttpMethod.POST, "/", this.createBook);
-       this._registerRoute(HttpMethod.PATCH, "/:id", this.updateBook);
-       this._registerRoute(HttpMethod.DELETE, "/:id", this.deleteBook);
+        this._registerRoute(HttpMethod.GET, "/search", this.searchBooks);
+        this._registerRoute(HttpMethod.GET, "/:id", this.getBookById);
+        this._registerRoute(HttpMethod.GET, "/", this.listBooks);
+        this._registerRoute(HttpMethod.POST, "/", this.createBook);
+        this._registerRoute(HttpMethod.PATCH, "/:id", this.updateBook);
+        this._registerRoute(HttpMethod.DELETE, "/:id", this.deleteBook);
     }
 }

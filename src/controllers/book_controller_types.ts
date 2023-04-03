@@ -38,6 +38,33 @@ export namespace HandlerTypes {
         export type Response = express.Response<BookSchema[]>;
     }
 
+    export namespace SearchBooks {
+        interface QueryParameters {
+            query?: string,
+            page?: string
+        }
+
+        interface RequestBody {
+            filters?: {
+                author?: string,
+                categories?: string[],
+                publisher?: string,
+                format?: string
+            },
+            booksPerPage?: number,
+            sortBy?: SortBySchema<BookSchema>
+        }
+
+        export type Request = express.Request<
+            {},
+            BookSchema[],
+            RequestBody,
+            QueryParameters
+        >;
+
+        export type Response = express.Response<BookSchema[]>;
+    }
+
     export namespace CreateBook {
         interface ResponseBody {
             createdId: ObjectId
@@ -53,7 +80,7 @@ export namespace HandlerTypes {
         export type Response = express.Response<ResponseBody>;
     }
 
-    export namespace UpdateBook {
+    export namespace UpdateBooks {
         interface RouteParameters {
             id: string
         }
