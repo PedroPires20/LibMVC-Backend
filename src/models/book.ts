@@ -20,7 +20,7 @@ export interface BookSchema extends ModelSchema {
     location: string
 }
 
-type BookQueryFilter = Filter<ExcludeId<BookSchema>>;
+export type BookQueryFilter = Filter<ExcludeId<BookSchema>>;
 
 type BookFieldNames = keyof ExcludeId<BookSchema>;
 
@@ -133,14 +133,19 @@ export default class Book extends Model<BookSchema> {
         ).toArray();
     }
 
-    public static async textSearch(searchQuery: string, options?: FindOptions) {
+    public static async textSearch(
+        searchQuery: string,
+        filters: Partial<ExcludeId<BookSchema>> = {},
+        options?: FindOptions
+    ) {
         return this._modelCollection.find({
             $text: {
                 $search: searchQuery,
                 $language: "portuguese",
                 $caseSensitive: false,
                 $diacriticSensitive: true
-            }
+            },
+            ...filters
         }, options).map((bookData) => new Book(
             this._modelCollection, bookData as BookSchema)
         ).toArray();
