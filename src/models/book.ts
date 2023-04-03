@@ -203,7 +203,7 @@ export default class Book extends Model<BookSchema> {
 
     public override async reload() {
         try {
-            let updatedData = await Book._modelCollection.findOne({ _id: this.id }) as BookSchema;
+            let updatedData = await this._collection.findOne({ _id: this.id }) as BookSchema;
             this._isbn = updatedData.isbn;
             this._title = updatedData.title;
             this._author = updatedData.author;
