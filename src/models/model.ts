@@ -9,7 +9,7 @@ export interface ModelSchema {
 
 export type ExcludeId<Schema extends ModelSchema> = Omit<Schema, "_id">;
 
-export type SortBySchema<Schema extends ModelSchema> = { [Field in keyof Schema]: -1 | 1 };
+export type SortBySchema<Schema extends ModelSchema> = { [Field in keyof Schema]?: -1 | 1 };
 
 export abstract class Model<Schema extends ModelSchema> {
     protected constructor(modelCollection: DatabaseDriver, id: ObjectId) {
@@ -125,6 +125,10 @@ export abstract class Model<Schema extends ModelSchema> {
 
 export class ModelError extends ApiError {
     constructor(modelName: string, modelCollection: string, errorMessage: string, statusCode = 500) {
-        super(`An error was encountered on the ${modelName} model (collection "${modelCollection}"): ${errorMessage}`, statusCode, modelName);
+        super(
+            `An error was encountered on the ${modelName} model (collection "${modelCollection}"): ${errorMessage}`,
+            statusCode,
+            modelName
+        );
     }
 }
