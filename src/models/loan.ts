@@ -4,16 +4,25 @@ import DatabaseDriver from "../database/database_driver";
 import { Model, ModelSchema, SchemaValidationResult, ExcludeId, ModelError, SortBySchema } from "./model";
 
 const COLLECTION_NAME = "loans";
+const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
 
 export interface LoanSchema extends ModelSchema {
     reader: string,
     phone: string,
     bookId: ObjectId,
     bookName: string,
-    date: Date,
-    duration: number,
-    isRenew: boolean
+    startDate: Date,
+    endDate: Date,
+    renew: boolean
 }
+
+export interface LoanExtraFields {
+    duration: number,
+    daysRemaining: number,
+    late: boolean
+}
+
+export type LoanCreationSchema = ExcludeId<LoanSchema>;
 
 export type LoanQueryFilter = Filter<ExcludeId<LoanSchema>>;
 
@@ -27,9 +36,9 @@ export default class Loan extends Model<LoanSchema> {
         this._phone = loanData.phone;
         this._bookId = loanData.bookId;
         this._bookName = loanData.bookName;
-        this._date = loanData.date;
-        this._duration = loanData.duration;
-        this._isRenew = loanData.isRenew;
+        this._startDate = loanData.startDate;
+        this._endDate = loanData.endDate;
+        this._renew = loanData.renew;
     }
 
     public static async initializeModel(dbServerAddress: string, dbServerPort: number, dbName: string) {
@@ -48,9 +57,9 @@ export default class Loan extends Model<LoanSchema> {
             reader: z.string().nonempty(),
             phone: z.string(),
             bookName: z.string().nonempty(),
-            date: z.date(),
-            duration: z.number().int().positive(),
-            isRenew: z.boolean()
+            startDate: z.date(),
+            endDate: z.date(),
+            renew: z.boolean()
         });
         let parseResult = loanSchemaValidator.safeParse(targetObject);
         if(!parseResult.success) {
@@ -64,9 +73,9 @@ export default class Loan extends Model<LoanSchema> {
             reader: z.string().nonempty().optional(),
             phone: z.string().optional(),
             bookName: z.string().nonempty().optional(),
-            date: z.date().optional(),
-            duration: z.number().int().positive().optional(),
-            isRenew: z.boolean().optional()
+            startDate: z.date().optional(),
+            endDate: z.date().optional(),
+            renew: z.boolean().optional()
         });
         let parseResult = loanSchemaValidator.safeParse(targetObject);
         if(!parseResult.success) {
@@ -125,25 +134,28 @@ export default class Loan extends Model<LoanSchema> {
         this._reader = updatedData.reader;
         this._phone = updatedData.phone;
         this._bookName = updatedData.bookName;
-        this._date = updatedData.date;
-        this._duration = updatedData.duration;
-        this._isRenew = updatedData.isRenew;
+        this._startDate = updatedData.startDate;
+        this._endDate = updatedData.endDate;
+        this._renew = updatedData.renew;
     }
 
     public static async deleteLoanById(id: ObjectId) {
         await this.deleteById(this._modelCollection, id);
     }
 
-    public override getAllFields(): LoanSchema {
+    public override getAllFields(): LoanSchema & LoanExtraFields {
         return {
             _id: this.id,
             reader: this._reader,
             phone: this._phone,
             bookId: this._bookId,
             bookName: this._bookName,
-            date: this._date,
-            duration: this._duration,
-            isRenew: this._isRenew
+            startDate: this._startDate,
+            endDate: this._endDate,
+            duration: this.duration,
+            daysRemaining: this.daysRemaining,
+            renew: this._renew,
+            late: this.late
         };
     }
 
@@ -153,12 +165,24 @@ export default class Loan extends Model<LoanSchema> {
             this._reader = updatedData.reader;
             this._phone = updatedData.phone;
             this._bookName = updatedData.bookName;
-            this._date = updatedData.date;
-            this._duration = updatedData.duration;
-            this._isRenew = updatedData.isRenew;
+            this._startDate = updatedData.startDate;
+            this._endDate = updatedData.endDate;
+            this._renew = updatedData.renew;
         }catch(exception: any) {
             throw new ModelError(this.constructor.name, COLLECTION_NAME, `Failed to reload the model instance data! The following exception was encountered: ${exception}`);
         }
+    }
+
+    public get duration() {
+        return Math.trunc((this._startDate.getTime() - this._endDate.getTime()) / MILLISECONDS_PER_DAY);
+    }
+
+    public get daysRemaining() {
+        return Math.trunc((Date.now() - this._endDate.getTime()) / MILLISECONDS_PER_DAY);
+    }
+
+    public get late() {
+        return this._endDate > this._endDate;
     }
 
     public get reader() {
@@ -197,31 +221,31 @@ export default class Loan extends Model<LoanSchema> {
         this._changeSet.bookName = book;
     }
     
-    public get date() {
-        return this._date;
+    public get startDate() {
+        return this._startDate;
     }
     
-    public set date(date: Date) {
-        this._date = date;
-        this._changeSet.date = date;
+    public set startDate(date: Date) {
+        this._startDate = date;
+        this._changeSet.startDate = date;
     }
     
-    public get duration() {
-        return this._duration;
+    public get endDate() {
+        return this._endDate;
     }
     
-    public set duration(duration: number) {
-        this._duration = duration;
-        this._changeSet.duration = duration;
+    public set endDate(endDate: Date) {
+        this._endDate = endDate;
+        this._changeSet.endDate = endDate;
     }
     
-    public get isRenew() {
-        return this._isRenew;
+    public get renew() {
+        return this._renew;
     }
     
-    public set isRenew(isRenew: boolean) {
-        this._isRenew = isRenew;
-        this._changeSet.isRenew = isRenew;
+    public set renew(renew: boolean) {
+        this._renew = renew;
+        this._changeSet.renew = renew;
     }
     
     private static _modelCollection: DatabaseDriver;
@@ -230,7 +254,7 @@ export default class Loan extends Model<LoanSchema> {
     private _phone: string;
     private _bookId: ObjectId;
     private _bookName: string;
-    private _date: Date;
-    private _duration: number;
-    private _isRenew: boolean;
+    private _startDate: Date;
+    private _endDate: Date;
+    private _renew: boolean;
 }
