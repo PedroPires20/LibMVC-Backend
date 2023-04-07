@@ -86,7 +86,7 @@ export abstract class Model<Schema extends ModelSchema> {
         if(this.wasEdited) {
             let updateResult: UpdateResult;
             try {
-                updateResult = await this._collection.updateOne({ _id: this._id }, this._changeSet);
+                updateResult = await this._collection.updateOne({ _id: this._id }, { $set: this._changeSet });
             }catch(exception: any) {
                 throw new DatabaseError(
                     this._collection.connectionString,

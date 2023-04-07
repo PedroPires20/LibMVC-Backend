@@ -121,16 +121,16 @@ export default class Loan extends Model<LoanSchema> {
         return this._modelCollection.distinct(fieldName);
     }
 
-    public override async updateFields(updatedValues: UpdateFilter<LoanSchema>) {
+    public override async updateFields(updatedValues: Partial<ExcludeId<LoanSchema>>) {
         let updateResult = await this._collection.findOneAndUpdate(
             { _id: this.id },
-            updatedValues as UpdateFilter<Document>,
+            { $set: updatedValues },
             { returnDocument: "after" }
         );
         if(!updateResult.ok || updateResult.value == null) {
             throw new ModelError("Loan", "", "");
         }
-        let updatedData = updatedValues.value as LoanSchema;
+        let updatedData = updateResult.value as LoanSchema;
         this._reader = updatedData.reader;
         this._phone = updatedData.phone;
         this._bookName = updatedData.bookName;

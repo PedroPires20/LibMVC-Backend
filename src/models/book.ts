@@ -185,10 +185,10 @@ export default class Book extends Model<BookSchema> {
         };
     }
 
-    public override async updateFields(updatedValues: UpdateFilter<BookSchema>) {
+    public override async updateFields(updatedValues: Partial<ExcludeId<BookSchema>>) {
         let updateResult = await this._collection.findOneAndUpdate(
             { _id: this.id },
-            updatedValues as UpdateFilter<Document>,
+            { $set: updatedValues },
             { returnDocument: "after" }
         );
         if(!updateResult.ok || updateResult.value == null) {
