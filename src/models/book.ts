@@ -15,7 +15,7 @@ export interface BookSchema extends ModelSchema {
     format: string,
     date: string,
     pages: number,
-    copies: number,
+    copies: number | null,
     description: string,
     location: string
 }
@@ -36,7 +36,7 @@ export default class Book extends Model<BookSchema> {
         this._format = bookData.format;
         this._date = bookData.date;
         this._pages = bookData.pages;
-        this._copies = bookData.copies;
+        this._copies = bookData.copies || Infinity;
         this._description = bookData.description;
         this._location = bookData.location;
     }
@@ -204,7 +204,7 @@ export default class Book extends Model<BookSchema> {
         this._format = updatedData.format;
         this._date = updatedData.date;
         this._pages = updatedData.pages;
-        this._copies = updatedData.copies;
+        this._copies = updatedData.copies || Infinity;
         this._description = updatedData.description;
         this._location = updatedData.location;
     }
@@ -221,7 +221,7 @@ export default class Book extends Model<BookSchema> {
             this._format = updatedData.format;
             this._date = updatedData.date;
             this._pages = updatedData.pages;
-            this._copies = updatedData.copies;
+            this._copies = updatedData.copies || Infinity;
             this._description = updatedData.description;
             this._location = updatedData.location;
         }catch(exception: any) {
@@ -316,7 +316,7 @@ export default class Book extends Model<BookSchema> {
     
     public set copies(copies: number) {
         this._copies = copies;
-        this._changeSet.copies = copies;
+        this._changeSet.copies = (isFinite(copies)) ? copies : null;
     }
     
     public get description() {
