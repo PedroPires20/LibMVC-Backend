@@ -1,0 +1,246 @@
+import { z } from "zod";
+import { Controller, DatabaseSettings, HttpMethod } from "./controller";
+import { HandlerTypes } from "./loan_controller_types";
+import Loan, { LoanQueryFilter, LoanSchema, LoanCreationSchema } from "../models/loan";
+import Book from "../models/book";
+import { ApiError } from "../helpers/error_handlers";
+import { ExcludeId } from "models/model";
+
+const MODULE_NAME = "LoanController";
+const DEFAULT_LOANS_PER_PAGE = 10;
+
+
+export default class LoanController extends Controller {
+    constructor(databaseSettings: DatabaseSettings) {
+        super(databaseSettings);
+    }
+
+    public async getLoanById(
+        request: HandlerTypes.GetLoanById.Request,
+        response: HandlerTypes.GetLoanById.Response
+    ) {
+        if(!request.params.id || !Loan.isValidId(request.params.id)) {
+            throw new ApiError(
+                `The provided loan id is invalid! The string "${request.params.id}" not a valid MongoDB ObjectId!`,
+                400,
+                MODULE_NAME
+            );
+        }
+        let id = Loan.getIdFromString(request.params.id);
+        let loan = await Loan.getLoanById(id);
+        response.status(200).json(loan.getAllFields());
+    }
+
+    public async listLoans(
+        request: HandlerTypes.ListLoans.Request,
+        response: HandlerTypes.ListLoans.Response
+    ) {
+        let loansToSkip = 0;
+        let limit = 0;
+        let mongoFilter: LoanQueryFilter = {};
+        if(request.query.page) {
+            let page = parseInt(request.query.page);
+            if(isNaN(page) || page <= 0) {
+                throw new ApiError(
+                    `An invalid value was provided to the pages parameter! The number of pages must be a positive integer (got value {${request.query.page}} of type "${typeof request.query.page}").`,
+                    400,
+                    MODULE_NAME
+                );
+            }
+            if(
+                request.body.loansPerPage &&
+                (typeof request.body.loansPerPage !== "number" || request.body.loansPerPage <= 0)
+            ) {
+                throw new ApiError(
+                    `An invalid value was provided to the loansPerPage property! The loansPerPage property must be a positive integer (got value {${request.body.loansPerPage}} of type "${typeof request.body.loansPerPage}").`,
+                    400,
+                    MODULE_NAME
+                );
+            }
+            let loansPerPage = request.body.loansPerPage || DEFAULT_LOANS_PER_PAGE;
+            loansToSkip = (page - 1) * loansPerPage;
+            limit = loansPerPage;
+        }
+        if(request.body.sortBy && typeof request.body.sortBy !== "object") {
+            throw new ApiError(
+                `The sort by property, if provided, must be a valid object. The provided value was of type "${typeof request.body.sortBy}".`,
+                400,
+                MODULE_NAME
+            );
+        }
+        if(request.body.filters) {
+            mongoFilter.reader = request.body.filters.reader;
+            mongoFilter.bookName = request.body.filters.bookName;
+            mongoFilter.renew = request.body.filters.renew;
+            if(request.body.filters.loanDate && request.body.filters.loanDate == "") {
+                mongoFilter.loanDate = new Date(request.body.filters.loanDate);
+            }
+            if(request.body.filters.endDate && request.body.filters.endDate == "") {
+                mongoFilter.endDate = new Date(request.body.filters.endDate);
+            }
+            mongoFilter.late = { $lt: new Date() };
+        }
+        let loans = await Loan.queryLoans(
+            mongoFilter,
+            loansToSkip,
+            limit,
+            request.body.sortBy
+        );
+        response.status(200).json(loans.map((loan) => loan.getAllFields()));
+    }
+
+    public async createLoan(
+        request: HandlerTypes.CreateLoan.Request,
+        response: HandlerTypes.CreateLoan.Response
+    ) {
+        const createBodyValidator = z.object({
+            reader: z.string().nonempty("The reader's name must not be empty"),
+            phone: z.string().nonempty().regex(/\(\d{2,5}\)\s+9?\d{4}-?\d{4}/, "Invalid phone number format"),
+            bookId: z.custom((data: any) => Book.isValidId(data || ""), { message: "The provided bookId string is not a valid MongoDB ObjectID" }),
+            startDate: z.date({coerce: true}),
+            duration: z.number().int().positive("The duration must me a positive integer"),
+            renew: z.boolean().default(false)
+        }).strict();
+        let validationResult = createBodyValidator.safeParse(request.body);
+        if(!validationResult.success) {
+            throw new ApiError(
+                `The data provided for the creation of the new loan is invalid! The following inconsistencies where found: ${validationResult.error}`,
+                400,
+                MODULE_NAME
+            );
+        }
+        let loanedBook = await Book.getBookById(Book.getIdFromString(request.body.bookId as string));
+        if(loanedBook.copies <= 0) {
+            throw new ApiError(
+                `The book requested for the new loan has no available units. BookId = "${request.body.bookId}`,
+                403,
+                MODULE_NAME
+            );
+        }
+        loanedBook.copies--;
+        let startDate = new Date(request.body.startDate as string);
+        let endDate = new Date(startDate.getTime());
+        endDate.setDate(startDate.getDate() + (request.body.duration as number))
+        let newLoanData: LoanCreationSchema = {
+            reader: request.body.reader as string,
+            phone: request.body.phone as string,
+            bookId: loanedBook.id,
+            bookName: loanedBook.title,
+            startDate: startDate,
+            endDate: endDate,
+            renew: request.body.renew as boolean
+        }
+        let newLoan = await Loan.createLoan(newLoanData);
+        await loanedBook.commitChanges();
+        response.status(201).json({ createdId: newLoan.id });
+    }
+
+    public async updateLoan(
+        request: HandlerTypes.UpdateLoan.Request,
+        response: HandlerTypes.UpdateLoan.Response
+    ) {
+        if(!Loan.isValidId(request.params.id)) {
+            throw new ApiError(
+                `The provided loan id is invalid! The string "${request.params.id}" not a valid MongoDB ObjectId!`,
+                400,
+                MODULE_NAME
+            );
+        }
+        let id = Loan.getIdFromString(request.params.id);
+        let loan = await Loan.getLoanById(id);
+        let updateFields: Partial<ExcludeId<LoanSchema>> = {
+            reader: request.body.reader,
+            phone: request.body.phone,
+            renew: request.body.renew
+        };
+        if(request.body.bookId) {
+            if(!Book.isValidId(request.body.bookId)) {
+                throw new ApiError(
+                    `The provided book id is invalid! The string "${request.params.id}" not a valid MongoDB ObjectId!`,
+                    400,
+                    MODULE_NAME
+                );
+            }
+            let newBook = await Book.getBookById(Book.getIdFromString(request.body.bookId));
+            if(newBook.copies <= 0) {
+                throw new ApiError(
+                    `The book requested to update the loan has no available units. BookId = "${request.body.bookId}"`,
+                    403,
+                    MODULE_NAME
+                );
+            }
+            let currentBook = await Book.getBookById(loan.bookId);
+            currentBook.copies++;
+            newBook.copies--;
+            await currentBook.commitChanges();
+            await newBook.commitChanges();
+            updateFields.bookId = newBook.id;
+            updateFields.bookName = newBook.title;
+        }
+        if(request.body.duration) {
+            updateFields.endDate = new Date(loan.startDate.getTime());
+            updateFields.endDate.setDate(
+                updateFields.endDate.getDate() + request.body.duration
+            );
+        }
+        if(request.body.startDate) {
+            let newStartDate = new Date(request.body.startDate);
+            let newEndDate = new Date(request.body.startDate);
+            newEndDate.setDate(newStartDate.getDate() + loan.duration);
+            updateFields.startDate = newStartDate;
+            updateFields.endDate = newEndDate;
+        }
+        try {
+            await loan.updateFields(updateFields);
+        }catch(exception: any) {
+            throw new ApiError(
+                `An error was encountered while updating the book with id="${id}". Any changes mede where rolled back. Error: ${exception}`
+            );
+        }
+        response.status(200).send();
+    }
+
+    public async deleteLoan(
+        request: HandlerTypes.DeleteLoan.Request,
+        response: HandlerTypes.DeleteLoan.Response
+    ) {
+        if(!Loan.isValidId(request.params.id)) {
+            throw new ApiError(
+                `The provided loan id is invalid! The string "${request.params.id}" not a valid MongoDB ObjectId!`,
+                400,
+                MODULE_NAME
+            );
+        }
+        let id = Loan.getIdFromString(request.params.id);
+        let loan = await Loan.getLoanById(id);
+        let loanedBook = await Book.getBookById(loan.bookId);
+        loanedBook.copies++;
+        await Loan.deleteLoanById(id);
+        await loanedBook.commitChanges();
+        response.status(200).send();
+    }
+
+    protected override _initializeModels(): void {
+        (async () => {
+            await Loan.initializeModel(
+                this._databaseConfiguration.serverUrl,
+                this._databaseConfiguration.serverPort,
+                this._databaseConfiguration.databaseName
+            )
+            await Book.initializeModel(
+                this._databaseConfiguration.serverUrl,
+                this._databaseConfiguration.serverPort,
+                this._databaseConfiguration.databaseName
+            );
+        })().then(() => { this._isReady = true; })
+        .catch((exception) => { throw new ApiError(`A model used by the LoanController failed to initialize with the following error: ${exception}`, 500, MODULE_NAME); });
+    }
+
+    protected override _initializeRoutes(): void {
+        this._registerRoute(HttpMethod.GET, "/:id", this.getLoanById);
+        this._registerRoute(HttpMethod.GET, "/", this.listLoans);
+        this._registerRoute(HttpMethod.POST, "/", this.createLoan);
+        this._registerRoute(HttpMethod.PATCH, "/:id", this.updateLoan);
+        this._registerRoute(HttpMethod.DELETE, "/:id", this.deleteLoan);
+    }
+}

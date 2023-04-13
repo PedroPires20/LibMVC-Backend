@@ -3,6 +3,7 @@ import * as dotenv from "dotenv";
 import { exceptionHandler, notFoundHandler } from "./helpers/error_handlers";
 import { Controller, DatabaseSettings } from "./controllers/controller";
 import BookController from "./controllers/book_controller";
+import LoanController from "./controllers/loan_controller";
 
 const DEFAULT_PORT_NUMBER = 3000;
 
@@ -41,6 +42,7 @@ export default class App {
 
     private _initializeControllers() {
         this._routeControllers.set("/books", new BookController(this._databaseSettings));
+        this._routeControllers.set("/loans", new LoanController(this._databaseSettings));
         for(let controller of this._routeControllers.values()) {
             controller.initializeController();
         }
