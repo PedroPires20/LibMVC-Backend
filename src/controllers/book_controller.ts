@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { Controller, DatabaseSettings, HttpMethod } from "./controller";
 import { HandlerTypes } from "./book_controller_types";
 import Book, { BookQueryFilter } from "../models/book";
@@ -164,10 +165,24 @@ export default class BookController extends Controller {
         request: HandlerTypes.CreateBook.Request,
         response: HandlerTypes.CreateBook.Response
     ) {
-        let validationResult = Book.validateSchema(request.body);
-        if(!validationResult.isValid) {
+        const bookSchemaValidator = z.object({
+            isbn: z.string().nonempty(),
+            title: z.string().nonempty(),
+            author: z.string().nonempty(),
+            categories: z.array(z.string().nonempty()),
+            publisher: z.string(),
+            edition: z.string(),
+            format: z.string(),
+            date: z.string(),
+            pages: z.number().int().nonnegative(),
+            copies: z.number().int().nonnegative(),
+            description: z.string(),
+            location: z.string()
+        });
+        let validationResult = bookSchemaValidator.safeParse(request.body);
+        if(!validationResult.success) {
             throw new ApiError(
-                `The data provided for the creation of the new book is invalid! The following inconsistencies where found: ${validationResult.errorMessage}`,
+                `The data provided for the creation of the new book is invalid! The following inconsistencies where found: ${validationResult.error.toString()}`,
                 400,
                 "BookController"
             );
@@ -180,28 +195,40 @@ export default class BookController extends Controller {
         request: HandlerTypes.UpdateBooks.Request,
         response: HandlerTypes.UpdateBooks.Response
     ) {
+        const bookUpdateValidator = z.object({
+            isbn: z.string().nonempty().optional(),
+            title: z.string().nonempty().optional(),
+            author: z.string().nonempty().optional(),
+            categories: z.array(z.string().nonempty()).optional(),
+            publisher: z.string().optional(),
+            edition: z.string().optional(),
+            format: z.string().optional(),
+            date: z.string().optional(),
+            pages: z.number().int().nonnegative().optional(),
+            copies: z.number().int().nonnegative().optional(),
+            description: z.string().optional(),
+            location: z.string().optional()
+        });
         if(!Book.isValidId(request.params.id)) {
             throw new ApiError(
                 `The provided book id is invalid! The string "${request.params.id}" not a valid MongoDB ObjectId!`,
                 400,
                 "BookController"
-            );
+                );
         }
         let id = Book.getIdFromString(request.params.id);
         let book = await Book.getBookById(id);
-        let validationResult = Book.validateUpdateSchema(request.body);
-        if(!validationResult.isValid) {
+        let validationResult = bookUpdateValidator.safeParse(request.body);
+        if(!validationResult.success) {
             throw new ApiError(
-                `The provided updated data is invalid! The following inconsistencies where encountered on the fields: ${validationResult.errorMessage}`,
+                `The provided updated data is invalid! The following inconsistencies where encountered on the fields: ${validationResult.error.toString()}`,
                 400,
                 "BookController"
             );
         }
-        book.updateFields(request.body);
         try {
-            await book.commitChanges();
+            await book.updateFields(request.body);
         }catch(exception: any) {
-            await book.reload();
             throw new ApiError(
                 `An error was encountered while updating the book with id="${id}". Any changes mede where rolled back. Error: ${exception}`
             );

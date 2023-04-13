@@ -1,7 +1,6 @@
-import { ObjectId, Filter, FindOptions, Document, UpdateFilter } from "mongodb";
-import { z } from "zod";
+import { ObjectId, Filter, FindOptions, Document } from "mongodb";
 import DatabaseDriver from "../database/database_driver";
-import { Model, ModelSchema, SchemaValidationResult, ExcludeId, ModelError, SortBySchema } from "./model";
+import { Model, ModelSchema, ExcludeId, ModelError, SortBySchema } from "./model";
 
 const COLLECTION_NAME = "loans";
 const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -51,39 +50,6 @@ export default class Loan extends Model<LoanSchema> {
         let newBookId = await super.addNew(this._modelCollection, newLoanData);
         return new Loan(this._modelCollection, { _id: newBookId, ...newLoanData });
     }
-
-    public static validateSchema(targetObject: any): SchemaValidationResult {
-        const loanSchemaValidator = z.object({
-            reader: z.string().nonempty(),
-            phone: z.string(),
-            bookName: z.string().nonempty(),
-            startDate: z.date(),
-            endDate: z.date(),
-            renew: z.boolean()
-        });
-        let parseResult = loanSchemaValidator.safeParse(targetObject);
-        if(!parseResult.success) {
-            return { isValid: false, errorMessage: parseResult.error.format().toString() };    
-        }
-        return { isValid: true };
-    }
-
-    public static validateUpdateSchema(targetObject: any): SchemaValidationResult {
-        const loanSchemaValidator = z.object({
-            reader: z.string().nonempty().optional(),
-            phone: z.string().optional(),
-            bookName: z.string().nonempty().optional(),
-            startDate: z.date().optional(),
-            endDate: z.date().optional(),
-            renew: z.boolean().optional()
-        });
-        let parseResult = loanSchemaValidator.safeParse(targetObject);
-        if(!parseResult.success) {
-            return { isValid: false, errorMessage: parseResult.error.format().toString() };    
-        }
-        return { isValid: true };
-    }
-
 
     public static async getLoanById(id: ObjectId) {
         let resultData = await this._modelCollection.findOne({ _id: id });

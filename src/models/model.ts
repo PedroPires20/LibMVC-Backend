@@ -7,14 +7,10 @@ export interface ModelSchema {
     _id: ObjectId;
 }
 
-export interface SchemaValidationResult {
-    isValid: boolean,
-    errorMessage?: string
-}
-
 export type ExcludeId<Schema extends ModelSchema> = Omit<Schema, "_id">;
 
 export type SortBySchema<Schema extends ModelSchema> = { [Field in keyof Schema]?: -1 | 1 };
+
 
 export abstract class Model<Schema extends ModelSchema> {
     protected constructor(modelCollection: DatabaseDriver, id: ObjectId) {
