@@ -122,6 +122,11 @@ export default class Loan extends Model<LoanSchema> {
     }
 
     public override async updateFields(updatedValues: Partial<ExcludeId<LoanSchema>>) {
+        Object.keys(updatedValues).forEach((field) => {
+            if(!updatedValues[field as keyof Partial<ExcludeId<LoanSchema>>]) {
+                delete updatedValues[field as keyof Partial<ExcludeId<LoanSchema>>];
+            }
+        })
         let updateResult = await this._collection.findOneAndUpdate(
             { _id: this.id },
             { $set: updatedValues },
@@ -174,15 +179,15 @@ export default class Loan extends Model<LoanSchema> {
     }
 
     public get duration() {
-        return Math.trunc((this._startDate.getTime() - this._endDate.getTime()) / MILLISECONDS_PER_DAY);
+        return Math.trunc((this._endDate.getTime() - this._startDate.getTime()) / MILLISECONDS_PER_DAY);
     }
 
     public get daysRemaining() {
-        return Math.trunc((Date.now() - this._endDate.getTime()) / MILLISECONDS_PER_DAY);
+        return Math.trunc((this._endDate.getTime() - Date.now()) / MILLISECONDS_PER_DAY);
     }
 
     public get late() {
-        return this._endDate > this._endDate;
+        return this._endDate < new Date();
     }
 
     public get reader() {
