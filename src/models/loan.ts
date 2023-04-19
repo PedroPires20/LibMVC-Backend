@@ -9,7 +9,7 @@ export interface LoanSchema extends ModelSchema {
     reader: string,
     phone: string,
     bookId: ObjectId,
-    bookName: string,
+    bookTitle: string,
     startDate: Date,
     endDate: Date,
     renew: boolean
@@ -34,7 +34,7 @@ export default class Loan extends Model<LoanSchema> {
         this._reader = loanData.reader;
         this._phone = loanData.phone;
         this._bookId = loanData.bookId;
-        this._bookName = loanData.bookName;
+        this._bookTitle = loanData.bookTitle;
         this._startDate = loanData.startDate;
         this._endDate = loanData.endDate;
         this._renew = loanData.renew;
@@ -97,7 +97,7 @@ export default class Loan extends Model<LoanSchema> {
             reader: this._reader,
             phone: this._phone,
             bookId: this._bookId,
-            bookName: this._bookName,
+            bookTitle: this._bookTitle,
             startDate: this._startDate,
             endDate: this._endDate,
             duration: this.duration,
@@ -112,7 +112,7 @@ export default class Loan extends Model<LoanSchema> {
             let updatedData = await this._collection.findOne({ _id: this.id }) as LoanSchema;
             this._reader = updatedData.reader;
             this._phone = updatedData.phone;
-            this._bookName = updatedData.bookName;
+            this._bookTitle = updatedData.bookTitle;
             this._startDate = updatedData.startDate;
             this._endDate = updatedData.endDate;
             this._renew = updatedData.renew;
@@ -160,13 +160,13 @@ export default class Loan extends Model<LoanSchema> {
         this._changeSet.bookId = bookId;
     }
 
-    public get bookName() {
-        return this._bookName;
+    public get bookTitle() {
+        return this._bookTitle;
     }
     
-    public set bookName(book: string) {
-        this._bookName = book;
-        this._changeSet.bookName = book;
+    public set bookTitle(book: string) {
+        this._bookTitle = book;
+        this._changeSet.bookTitle = book;
     }
     
     public get startDate() {
@@ -201,7 +201,7 @@ export default class Loan extends Model<LoanSchema> {
     private _reader: string;
     private _phone: string;
     private _bookId: ObjectId;
-    private _bookName: string;
+    private _bookTitle: string;
     private _startDate: Date;
     private _endDate: Date;
     private _renew: boolean;

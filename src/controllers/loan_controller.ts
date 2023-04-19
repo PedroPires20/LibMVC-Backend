@@ -70,7 +70,7 @@ export default class LoanController extends Controller {
         }
         if(request.body.filters) {
             mongoFilter.reader = request.body.filters.reader;
-            mongoFilter.bookName = request.body.filters.bookName;
+            mongoFilter.bookTitle = request.body.filters.bookName;
             mongoFilter.renew = request.body.filters.renew;
             if(request.body.filters.loanDate && request.body.filters.loanDate == "") {
                 mongoFilter.loanDate = new Date(request.body.filters.loanDate);
@@ -125,7 +125,7 @@ export default class LoanController extends Controller {
             reader: request.body.reader as string,
             phone: request.body.phone as string,
             bookId: loanedBook.id,
-            bookName: loanedBook.title,
+            bookTitle: loanedBook.title,
             startDate: startDate,
             endDate: endDate,
             renew: request.body.renew as boolean
@@ -192,7 +192,7 @@ export default class LoanController extends Controller {
             await currentBook.commitChanges();
             await newBook.commitChanges();
             loan.bookId = newBook.id;
-            loan.bookName = newBook.title;
+            loan.bookTitle = newBook.title;
         }
         if(request.body.duration) {
             loan.endDate = new Date(loan.startDate.getTime());
