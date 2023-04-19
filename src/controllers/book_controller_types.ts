@@ -85,10 +85,17 @@ export namespace HandlerTypes {
             id: string
         }
 
+        type UpdateBody = Omit<Partial<BookSchema>, "categories"> & {
+            categories?: string[] | {
+                $add: string[],
+                $remove: string[]
+            }
+        }
+
         export type Request = express.Request<
             RouteParameters,
             {},
-            Partial<BookSchema>,
+            UpdateBody,
             {}
         >;
         export type Response = express.Response<{}>;

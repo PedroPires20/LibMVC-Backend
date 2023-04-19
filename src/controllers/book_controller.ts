@@ -200,7 +200,14 @@ export default class BookController extends Controller {
             isbn: z.string().nonempty().optional(),
             title: z.string().nonempty().optional(),
             author: z.string().nonempty().optional(),
-            categories: z.array(z.string().nonempty()).optional(),
+            categories: z.array(z.string().nonempty()).or(
+                z.object(
+                    {
+                        $add: z.array(z.string().nonempty()).optional(),
+                        $remove: z.array(z.string().nonempty()).optional()
+                    }
+                )
+            ).optional(),
             publisher: z.string().optional(),
             edition: z.string().optional(),
             format: z.string().optional(),
@@ -237,7 +244,16 @@ export default class BookController extends Controller {
             book.author = request.body.author;
         }
         if(request.body.categories) {
-            book.categories = request.body.categories;
+            if(Array.isArray(request.body.categories)) {
+                book.categories = request.body.categories;
+            }else {
+                if(request.body.categories.$add){
+                    book.addCategories(request.body.categories.$add)
+                }
+                if(request.body.categories.$remove) {
+                    book.removeCategories(request.body.categories.$remove);
+                }
+            }
         }
         if(request.body.publisher) {
             book.publisher = request.body.publisher;

@@ -160,6 +160,14 @@ export default class Book extends Model<BookSchema> {
         }
     }
 
+    public addCategories(newCategories: string[]) {
+        this._categories.push(...newCategories);
+    }
+    
+    public removeCategories(toRemove: string[]) {
+        this.categories = this.categories.filter(category => !toRemove.includes(category));
+    }
+
     public get isbn() {
         return this._isbn;
     }
@@ -187,13 +195,13 @@ export default class Book extends Model<BookSchema> {
         this._changeSet.author = author;
     }
     
-    public get categories() {
+    public get categories(): readonly string[] {
         return this._categories;
     }
     
-    public set categories(categories: string[]) {
-        this._categories = categories;
-        this._changeSet.categories = categories;
+    public set categories(categories: readonly string[]) {
+        this._categories = categories.slice();
+        this._changeSet.categories = this._categories;
     }
     
     public get publisher() {
