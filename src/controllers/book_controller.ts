@@ -4,6 +4,7 @@ import { HandlerTypes } from "./book_controller_types";
 import Book, { BookQueryFilter } from "../models/book";
 import { ApiError } from "../helpers/error_handlers";
 
+const MODULE_NAME = "BookController";
 const DEFAULT_BOOKS_PER_PAGE = 10;
 
 
@@ -20,7 +21,7 @@ export default class BookController extends Controller {
             throw new ApiError(
                 `The provided book id is invalid! The string "${request.params.id}" not a valid MongoDB ObjectId!`,
                 400,
-                "BookController"
+                MODULE_NAME
             );
         }
         let id = Book.getIdFromString(request.params.id);
@@ -40,7 +41,7 @@ export default class BookController extends Controller {
                 throw new ApiError(
                     `An invalid value was provided to the pages parameter! The number of pages must be a positive integer (got value {${request.query.page}} of type "${typeof request.query.page}").`,
                     400,
-                    "BookController"
+                    MODULE_NAME
                 );
             }
             if(
@@ -50,7 +51,7 @@ export default class BookController extends Controller {
                 throw new ApiError(
                     `An invalid value was provided to the booksPerPage property! The booksPerPage property must be a positive integer (got value {${request.body.booksPerPage}} of type "${typeof request.body.booksPerPage}").`,
                     400,
-                    "BookController"
+                    MODULE_NAME
                 )
             }
             let booksPerPage = request.body.booksPerPage || DEFAULT_BOOKS_PER_PAGE;
@@ -63,7 +64,7 @@ export default class BookController extends Controller {
             throw new ApiError(
                 `The sort by property, if provided, must be a valid object. The provided value was of type "${typeof request.body.sortBy}".`,
                 400,
-                "BookController"
+                MODULE_NAME
             );
         }
         let books = await Book.queryBooks({}, booksToSkip, limit, request.body.sortBy);
@@ -82,7 +83,7 @@ export default class BookController extends Controller {
                 throw new ApiError(
                     `An invalid value was provided to the pages parameter! The number of pages must be a positive integer (got value {${request.query.page}} of type "${typeof request.query.page}").`,
                     400,
-                    "BookController"
+                    MODULE_NAME
                 );
             }
             if(
@@ -92,7 +93,7 @@ export default class BookController extends Controller {
                 throw new ApiError(
                     `An invalid value was provided to the booksPerPage property! The booksPerPage property must be a positive integer (got value {${request.body.booksPerPage}} of type "${typeof request.body.booksPerPage}").`,
                     400,
-                    "BookController"
+                    MODULE_NAME
                 )
             }
             let booksPerPage = request.body.booksPerPage || DEFAULT_BOOKS_PER_PAGE;
@@ -105,7 +106,7 @@ export default class BookController extends Controller {
             throw new ApiError(
                 `The sort by property, if provided, must be a valid object. The provided value was of type "${typeof request.body.sortBy}".`,
                 400,
-                "BookController"
+                MODULE_NAME
             );
         }
         if(request.body.filters) {
@@ -113,7 +114,7 @@ export default class BookController extends Controller {
                 throw new ApiError(
                     `The filters property, if provided, must be a valid object. The provided value was of type "${typeof request.body.sortBy}".`,
                     400,
-                    "BookController"
+                    MODULE_NAME
                 );
             }
             for(const field of Object.keys(request.body.filters)) {
@@ -124,7 +125,7 @@ export default class BookController extends Controller {
                             throw new ApiError(
                                 `The filters "categories" field, if provided, must be an array of strings. The provided value was of type "${typeof request.body.filters?.categories}".`,
                                 400,
-                                "BookController"
+                                MODULE_NAME
                             );
                     }
                 }else if(
@@ -134,7 +135,7 @@ export default class BookController extends Controller {
                     throw new ApiError(
                         `The filters "${field}" field, if provided, must be a non-empty string. The provided value was of type "${typeof request.body.filters[field as CategoriesFields]}".`,
                         400,
-                        "BookController"
+                        MODULE_NAME
                     );
                 }
             }
@@ -184,7 +185,7 @@ export default class BookController extends Controller {
             throw new ApiError(
                 `The data provided for the creation of the new book is invalid! The following inconsistencies where found: ${validationResult.error.toString()}`,
                 400,
-                "BookController"
+                MODULE_NAME
             );
         }
         let newBook = await Book.createBook(request.body);
@@ -213,7 +214,7 @@ export default class BookController extends Controller {
             throw new ApiError(
                 `The provided book id is invalid! The string "${request.params.id}" not a valid MongoDB ObjectId!`,
                 400,
-                "BookController"
+                MODULE_NAME
                 );
         }
         let id = Book.getIdFromString(request.params.id);
@@ -223,7 +224,7 @@ export default class BookController extends Controller {
             throw new ApiError(
                 `The provided updated data is invalid! The following inconsistencies where encountered on the fields: ${validationResult.error.toString()}`,
                 400,
-                "BookController"
+                MODULE_NAME
             );
         }
         try {
@@ -244,7 +245,7 @@ export default class BookController extends Controller {
             throw new ApiError(
                 `The provided book id is invalid! The string "${request.params.id}" not a valid MongoDB ObjectId!`,
                 400,
-                "BookController"
+                MODULE_NAME
             );
         }
         let id = Book.getIdFromString(request.params.id);
