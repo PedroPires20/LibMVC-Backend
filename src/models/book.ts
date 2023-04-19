@@ -140,30 +140,6 @@ export default class Book extends Model<BookSchema> {
         };
     }
 
-    public override async updateFields(updatedValues: Partial<ExcludeId<BookSchema>>) {
-        let updateResult = await this._collection.findOneAndUpdate(
-            { _id: this.id },
-            { $set: updatedValues },
-            { returnDocument: "after" }
-        );
-        if(!updateResult.ok || updateResult.value == null) {
-            throw new ModelError("Book", "", "");
-        }
-        let updatedData = updateResult.value as BookSchema;
-        this._isbn = updatedData.isbn;
-        this._title = updatedData.title;
-        this._author = updatedData.author;
-        this._categories = updatedData.categories;
-        this._publisher = updatedData.publisher;
-        this._edition = updatedData.edition;
-        this._format = updatedData.format;
-        this._date = updatedData.date;
-        this._pages = updatedData.pages;
-        this._copies = updatedData.copies || Infinity;
-        this._description = updatedData.description;
-        this._location = updatedData.location;
-    }
-
     public override async reload() {
         try {
             let updatedData = await this._collection.findOne({ _id: this.id }) as BookSchema;

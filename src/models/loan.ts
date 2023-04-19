@@ -87,29 +87,6 @@ export default class Loan extends Model<LoanSchema> {
         return this._modelCollection.distinct(fieldName);
     }
 
-    public override async updateFields(updatedValues: Partial<ExcludeId<LoanSchema>>) {
-        Object.keys(updatedValues).forEach((field) => {
-            if(!updatedValues[field as keyof Partial<ExcludeId<LoanSchema>>]) {
-                delete updatedValues[field as keyof Partial<ExcludeId<LoanSchema>>];
-            }
-        })
-        let updateResult = await this._collection.findOneAndUpdate(
-            { _id: this.id },
-            { $set: updatedValues },
-            { returnDocument: "after" }
-        );
-        if(!updateResult.ok || updateResult.value == null) {
-            throw new ModelError("Loan", "", "");
-        }
-        let updatedData = updateResult.value as LoanSchema;
-        this._reader = updatedData.reader;
-        this._phone = updatedData.phone;
-        this._bookName = updatedData.bookName;
-        this._startDate = updatedData.startDate;
-        this._endDate = updatedData.endDate;
-        this._renew = updatedData.renew;
-    }
-
     public static async deleteLoanById(id: ObjectId) {
         await this.deleteById(this._modelCollection, id);
     }

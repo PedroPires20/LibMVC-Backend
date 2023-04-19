@@ -217,8 +217,6 @@ export default class BookController extends Controller {
                 MODULE_NAME
                 );
         }
-        let id = Book.getIdFromString(request.params.id);
-        let book = await Book.getBookById(id);
         let validationResult = bookUpdateValidator.safeParse(request.body);
         if(!validationResult.success) {
             throw new ApiError(
@@ -227,8 +225,46 @@ export default class BookController extends Controller {
                 MODULE_NAME
             );
         }
+        let id = Book.getIdFromString(request.params.id);
+        let book = await Book.getBookById(id);
+        if(request.body.isbn) {
+            book.isbn = request.body.isbn;
+        }
+        if(request.body.title) {
+            book.title = request.body.title;
+        }
+        if(request.body.author) {
+            book.author = request.body.author;
+        }
+        if(request.body.categories) {
+            book.categories = request.body.categories;
+        }
+        if(request.body.publisher) {
+            book.publisher = request.body.publisher;
+        }
+        if(request.body.edition) {
+            book.edition = request.body.edition;
+        }
+        if(request.body.format) {
+            book.format = request.body.format;
+        }
+        if(request.body.date) {
+            book.date = request.body.date;
+        }
+        if(request.body.pages) {
+            book.pages = request.body.pages;
+        }
+        if(request.body.copies) {
+            book.copies = request.body.copies;
+        }
+        if(request.body.description) {
+            book.description = request.body.description;
+        }
+        if(request.body.location) {
+            book.location = request.body.location;
+        }
         try {
-            await book.updateFields(request.body);
+            await book.commitChanges();
         }catch(exception: any) {
             throw new ApiError(
                 `An error was encountered while updating the book with id="${id}". Any changes mede where rolled back. Error: ${exception}`

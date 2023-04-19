@@ -147,12 +147,29 @@ export default class LoanController extends Controller {
             );
         }
         let id = Loan.getIdFromString(request.params.id);
+        const updateBodyValidator = z.object({
+            reader: z.string().nonempty("The reader's name must not be empty").optional(),
+            phone: z.string().nonempty().regex(/\(\d{2,5}\)\s+9?\d{4}-?\d{4}/, "Invalid phone number format").optional(),
+            bookId: z.custom((data: any) => Book.isValidId(data || ""), { message: "The provided bookId string is not a valid MongoDB ObjectID" }).optional(),
+            startDate: z.date({coerce: true}).optional(),
+            duration: z.number().int().positive("The duration must me a positive integer").optional(),
+            renew: z.boolean().default(false).optional()
+        }).strict();
+        let validationResult = updateBodyValidator.safeParse(request.body);
+        if(!validationResult.success) {
+            throw new ApiError(
+                `The data provided for the loan update is invalid! The following inconsistencies where found: ${validationResult.error}`,
+                400,
+                MODULE_NAME
+            );
+        }
         let loan = await Loan.getLoanById(id);
-        let updateFields: Partial<ExcludeId<LoanSchema>> = {
-            reader: request.body.reader,
-            phone: request.body.phone,
-            renew: request.body.renew
-        };
+        if(request.body.reader) {
+            loan.reader = request.body.reader;
+        }
+        if(request.body.phone) {
+            loan.phone = request.body.phone
+        }
         if(request.body.bookId) {
             if(!Book.isValidId(request.body.bookId)) {
                 throw new ApiError(
@@ -174,24 +191,27 @@ export default class LoanController extends Controller {
             newBook.copies--;
             await currentBook.commitChanges();
             await newBook.commitChanges();
-            updateFields.bookId = newBook.id;
-            updateFields.bookName = newBook.title;
+            loan.bookId = newBook.id;
+            loan.bookName = newBook.title;
         }
         if(request.body.duration) {
-            updateFields.endDate = new Date(loan.startDate.getTime());
-            updateFields.endDate.setDate(
-                updateFields.endDate.getDate() + request.body.duration
+            loan.endDate = new Date(loan.startDate.getTime());
+            loan.endDate.setDate(
+                loan.endDate.getDate() + request.body.duration
             );
         }
         if(request.body.startDate) {
             let newStartDate = new Date(request.body.startDate);
             let newEndDate = new Date(request.body.startDate);
             newEndDate.setDate(newStartDate.getDate() + loan.duration);
-            updateFields.startDate = newStartDate;
-            updateFields.endDate = newEndDate;
+            loan.startDate = newStartDate;
+            loan.endDate = newEndDate;
+        }
+        if(request.body.renew) {
+            loan.renew = request.body.renew;
         }
         try {
-            await loan.updateFields(updateFields);
+            await loan.commitChanges();
         }catch(exception: any) {
             throw new ApiError(
                 `An error was encountered while updating the book with id="${id}". Any changes mede where rolled back. Error: ${exception}`

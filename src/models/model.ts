@@ -76,8 +76,6 @@ export abstract class Model<Schema extends ModelSchema> {
         }
     }
 
-    public abstract updateFields(updatedValues: UpdateFilter<Schema>): Promise<void>;
-    
     public async commitChanges() {
         if(this.wasEdited) {
             let updateResult: UpdateResult;
