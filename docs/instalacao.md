@@ -228,6 +228,39 @@ e a ordenação dos resultados, que funciona de maneira análoga.
 }
 ```
 
+## Listar todos os valores únicos de um campo
+
+Esse endpoint permite recuperar todos os valores únicos conhecidos para um
+determinado campo do livro. Dado o nome de um dos campos do livro ("isbn",
+"title", "author", "categories", "publisher", "edition", "format", "date",
+"pages", "copies", "description" ou "location"), é retornado um vetor contendo
+todos os valores únicos desse campo, considerando todos os livros registrados.
+
+### Requisição
+
+`GET /books/fields/:filedName`
+
+#### Variáveis de rota
+
+| Nome | Tipo | Descrição |
+| --- | ------|-------------|
+| fieldName | string | Nome do campo do livro para o qual deseja recuperar o conjunto de valores conhecidos |
+
+```plain
+Corpo vazio
+```
+
+### Resposta
+
+```json
+[
+  "value1",
+  "value2",
+  "value3",
+  ...
+]
+```
+
 ## Atualizar informações de um livro
 
 Dado o ID de um livro, essa requisição permite atualizar suas informações no
@@ -408,6 +441,39 @@ também suporta a filtragem dos resultados utilizando os valores dos campos:
   },
   ...
 }
+```
+
+## Listar todos os valores únicos de um campo
+
+Esse endpoint permite recuperar todos os valores únicos conhecidos para um
+determinado campo do empréstimo. Dado o nome de um dos campos do empréstimo
+("reader", "phone", "bookId", "bookTitle", "startDate", "endDate" ou "renew"), é
+retornado um vetor contendo todos os valores únicos desse campo, considerando
+todos os empréstimos registrados.
+
+### Requisição
+
+`GET /loans/fields/:filedName`
+
+#### Variáveis de rota
+
+| Nome | Tipo | Descrição |
+| --- | ------|-------------|
+| fieldName | string | Nome do campo do empréstimo para o qual deseja recuperar o conjunto de valores conhecidos |
+
+```plain
+Corpo vazio
+```
+
+### Resposta
+
+```json
+[
+  "value1",
+  "value2",
+  "value3",
+  ...
+]
 ```
 
 ## Atualizar informações de um empréstimo
