@@ -21,7 +21,11 @@ export interface BookSchema extends ModelSchema {
 
 export type BookQueryFilter = Filter<ExcludeId<BookSchema>>;
 
-type BookFieldNames = keyof ExcludeId<BookSchema>;
+const BOOK_FIELD_NAMES = ["isbn", "title", "author", "categories", "publisher", "edition",
+    "format", "date", "pages", "copies", "description", "location"] as const;
+
+type BookFieldName = typeof BOOK_FIELD_NAMES[number];
+
 
 export default class Book extends Model<BookSchema> {
     private constructor(modelCollection: DatabaseDriver, bookData: BookSchema) {
@@ -114,7 +118,11 @@ export default class Book extends Model<BookSchema> {
         ).toArray();
     }
 
-    public static async getDistinctFieldValues(fieldName: BookFieldNames) {
+    public static isValidFieldName(value: unknown): value is BookFieldName {
+        return typeof value === "string" && BOOK_FIELD_NAMES.includes(value as BookFieldName);
+    }
+
+    public static async getDistinctFieldValues(fieldName: BookFieldName) {
         return this._modelCollection.distinct(fieldName);
     }
 

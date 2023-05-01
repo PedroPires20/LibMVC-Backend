@@ -25,7 +25,9 @@ export type LoanCreationSchema = ExcludeId<LoanSchema>;
 
 export type LoanQueryFilter = Filter<ExcludeId<LoanSchema>>;
 
-type LoanFieldNames = keyof ExcludeId<LoanSchema>;
+const LOAN_FIELD_NAMES = ["reader", "phone", "bookId", "bookTitle", "startDate", "endDate", "renew"] as const;
+
+type LoanFieldName = typeof LOAN_FIELD_NAMES[number];
 
 
 export default class Loan extends Model<LoanSchema> {
@@ -83,7 +85,11 @@ export default class Loan extends Model<LoanSchema> {
         ).toArray();
     }
 
-    public static async getDistinctFieldValues(fieldName: LoanFieldNames) {
+    public static isValidFieldName(value: unknown): value is LoanFieldName {
+        return typeof value === "string" && LOAN_FIELD_NAMES.includes(value as LoanFieldName);
+    }
+
+    public static async getDistinctFieldValues(fieldName: LoanFieldName) {
         return this._modelCollection.distinct(fieldName);
     }
 

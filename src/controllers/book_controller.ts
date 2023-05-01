@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { Controller, DatabaseSettings, HttpMethod } from "./controller";
 import { HandlerTypes } from "./book_controller_types";
-import Book, { BookQueryFilter } from "../models/book";
+import Book, { BookQueryFilter, BookSchema } from "../models/book";
 import { ApiError } from "../helpers/error_handlers";
 
 const MODULE_NAME = "BookController";
@@ -162,6 +162,21 @@ export default class BookController extends Controller {
         response.status(200).json(books.map(book => book.getAllFields()));
     }
 
+    public async listFieldValues(
+        request: HandlerTypes.ListFieldValues.Request,
+        response: HandlerTypes.ListFieldValues.Response
+    ) {
+        if(!Book.isValidFieldName(request.params.fieldName)) {
+            throw new ApiError(
+                `The provided field name is invalid! The string "${request.params.fieldName}" not a valid Book object field!`,
+                400,
+                MODULE_NAME
+            );
+        }
+        let fieldValues = await Book.getDistinctFieldValues(request.params.fieldName);
+        response.status(200).json(fieldValues);
+    }
+
     public async createBook(
         request: HandlerTypes.CreateBook.Request,
         response: HandlerTypes.CreateBook.Response
@@ -316,6 +331,7 @@ export default class BookController extends Controller {
 
     protected _initializeRoutes() {
         this._registerRoute(HttpMethod.GET, "/search", this.searchBooks);
+        this._registerRoute(HttpMethod.GET, "/fields/:fieldName", this.listFieldValues);
         this._registerRoute(HttpMethod.GET, "/:id", this.getBookById);
         this._registerRoute(HttpMethod.GET, "/", this.listBooks);
         this._registerRoute(HttpMethod.POST, "/", this.createBook);

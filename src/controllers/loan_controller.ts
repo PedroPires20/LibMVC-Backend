@@ -1,10 +1,9 @@
 import { z } from "zod";
 import { Controller, DatabaseSettings, HttpMethod } from "./controller";
 import { HandlerTypes } from "./loan_controller_types";
-import Loan, { LoanQueryFilter, LoanSchema, LoanCreationSchema } from "../models/loan";
+import Loan, { LoanQueryFilter, LoanCreationSchema } from "../models/loan";
 import Book from "../models/book";
 import { ApiError } from "../helpers/error_handlers";
-import { ExcludeId } from "models/model";
 
 const MODULE_NAME = "LoanController";
 const DEFAULT_LOANS_PER_PAGE = 10;
@@ -87,6 +86,21 @@ export default class LoanController extends Controller {
             request.body.sortBy
         );
         response.status(200).json(loans.map((loan) => loan.getAllFields()));
+    }
+
+    public async listFieldValues(
+        request: HandlerTypes.ListFieldValues.Request,
+        response: HandlerTypes.ListFieldValues.Response
+    ) {
+        if(!Loan.isValidFieldName(request.params.fieldName)) {
+            throw new ApiError(
+                `The provided field name is invalid! The string "${request.params.fieldName}" not a valid Book object field!`,
+                400,
+                MODULE_NAME
+            );
+        }
+        let fieldValues = await Loan.getDistinctFieldValues(request.params.fieldName);
+        response.status(200).json(fieldValues);
     }
 
     public async createLoan(
@@ -257,6 +271,7 @@ export default class LoanController extends Controller {
     }
 
     protected override _initializeRoutes(): void {
+        this._registerRoute(HttpMethod.GET, "/fields/:fieldName", this.listFieldValues);
         this._registerRoute(HttpMethod.GET, "/:id", this.getLoanById);
         this._registerRoute(HttpMethod.GET, "/", this.listLoans);
         this._registerRoute(HttpMethod.POST, "/", this.createLoan);

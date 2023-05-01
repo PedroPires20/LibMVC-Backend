@@ -1,6 +1,6 @@
 import * as express from "express";
 import type { LoanExtraFields, LoanSchema } from "../models/loan";
-import { ExcludeId, SortBySchema } from "../models/model";
+import { SortBySchema } from "../models/model";
 import { ObjectId } from "mongodb";
 
 type LoanAllFields = LoanSchema & LoanExtraFields;
@@ -48,6 +48,21 @@ export namespace HandlerTypes {
         >;
 
         export type Response = express.Response<LoanAllFields[]>;
+    }
+
+    export namespace ListFieldValues {
+        interface QueryParameters {
+            fieldName: string
+        }
+
+        export type Request = express.Request<
+            QueryParameters,
+            any[],
+            {},
+            {}
+        >;
+
+        export type Response = express.Response<any[]>;
     }
 
     export namespace CreateLoan {
