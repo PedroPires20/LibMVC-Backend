@@ -24,26 +24,16 @@ export namespace HandlerTypes {
 
     export namespace ListLoans {
         interface QueryParameters {
-            page?: string
-        }
-
-        interface RequestBody {
-            loansPerPage?: number,
-            filters?: {
-                reader: string,
-                bookName: string,
-                loanDate: string,
-                endDate: string,
-                late: boolean,
-                renew: boolean
-            }
-            sortBy?: SortBySchema<LoanAllFields>
+            page?: string,
+            ipp?: string,
+            filter?: string,
+            sort?: string
         }
 
         export type Request = express.Request<
             {},
             LoanAllFields[],
-            RequestBody,
+            {},
             QueryParameters
         >;
 

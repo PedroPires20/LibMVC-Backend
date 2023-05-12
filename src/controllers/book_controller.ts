@@ -44,30 +44,32 @@ export default class BookController extends Controller {
                     MODULE_NAME
                 );
             }
-            if(
-                request.body.booksPerPage &&
-                (typeof request.body.booksPerPage !== "number" || request.body.booksPerPage <= 0)
-            ) {
+            let booksPerPage = (request.query.ipp) ? parseInt(request.query.ipp) : DEFAULT_BOOKS_PER_PAGE;
+            if(isNaN(booksPerPage) || booksPerPage <= 0) {
                 throw new ApiError(
-                    `An invalid value was provided to the booksPerPage property! The booksPerPage property must be a positive integer (got value {${request.body.booksPerPage}} of type "${typeof request.body.booksPerPage}").`,
+                    `An invalid value was provided to the booksPerPage parameter! The booksPerPage parameter, if provided, must be a positive integer (got value {${request.query.ipp}}).`,
                     400,
                     MODULE_NAME
                 )
             }
-            let booksPerPage = request.body.booksPerPage || DEFAULT_BOOKS_PER_PAGE;
             booksToSkip = (page - 1) * booksPerPage;
             limit = booksPerPage;
         }else {
             booksToSkip = limit = 0;
         }
-        if(request.body.sortBy && typeof request.body.sortBy !== "object") {
-            throw new ApiError(
-                `The sort by property, if provided, must be a valid object. The provided value was of type "${typeof request.body.sortBy}".`,
-                400,
-                MODULE_NAME
-            );
+        let sortBy;
+        if(request.query.sortBy) {
+            try {
+                sortBy = JSON.parse(decodeURI(request.query.sortBy));
+            }catch(exception: any) {
+                throw new ApiError(
+                    `The sort by parameter, if provided, must be a valid JSON string. The provided value was "${decodeURI(request.query.sortBy)}".`,
+                    400,
+                    MODULE_NAME
+                );
+            }
         }
-        let books = await Book.queryBooks({}, booksToSkip, limit, request.body.sortBy);
+        let books = await Book.queryBooks({}, booksToSkip, limit, sortBy);
         response.status(200).json(books.map(book => book.getAllFields()));
     }
 
@@ -86,77 +88,79 @@ export default class BookController extends Controller {
                     MODULE_NAME
                 );
             }
-            if(
-                request.body.booksPerPage &&
-                (typeof request.body.booksPerPage !== "number" || request.body.booksPerPage <= 0)
-            ) {
+            let booksPerPage = (request.query.ipp) ? parseInt(request.query.ipp) : DEFAULT_BOOKS_PER_PAGE;
+            if(isNaN(booksPerPage) || booksPerPage <= 0) {
                 throw new ApiError(
-                    `An invalid value was provided to the booksPerPage property! The booksPerPage property must be a positive integer (got value {${request.body.booksPerPage}} of type "${typeof request.body.booksPerPage}").`,
+                    `An invalid value was provided to the booksPerPage parameter! The booksPerPage parameter, if provided, must be a positive integer (got value {${request.query.ipp}}).`,
                     400,
                     MODULE_NAME
                 )
             }
-            let booksPerPage = request.body.booksPerPage || DEFAULT_BOOKS_PER_PAGE;
             booksToSkip = (page - 1) * booksPerPage;
             limit = booksPerPage;
         }else {
             booksToSkip = limit = 0;
         }
-        if(request.body.sortBy && typeof request.body.sortBy !== "object") {
-            throw new ApiError(
-                `The sort by property, if provided, must be a valid object. The provided value was of type "${typeof request.body.sortBy}".`,
-                400,
-                MODULE_NAME
-            );
-        }
-        if(request.body.filters) {
-            if(typeof request.body.sortBy !== "object") {
+        let sortBy;
+        if(request.query.sortBy) {
+            try {
+                sortBy = JSON.parse(decodeURI(request.query.sortBy));
+            }catch(exception: any) {
                 throw new ApiError(
-                    `The filters property, if provided, must be a valid object. The provided value was of type "${typeof request.body.sortBy}".`,
+                    `The sort by parameter, if provided, must be a valid JSON string. The provided value was "${decodeURI(request.query.sortBy)}".`,
                     400,
                     MODULE_NAME
                 );
             }
-            for(const field of Object.keys(request.body.filters)) {
-                type CategoriesFields = keyof typeof request.body.filters;
+        }
+        let filters;
+        if(request.query.filter) {
+            try {
+                filters = JSON.parse(decodeURI(request.query.filter))
+            }catch(exception: any) {
+                throw new ApiError(
+                    `The filters parameter, if provided, must be a valid object. The provided value was "${decodeURI(request.query.filter)}".`,
+                    400,
+                    MODULE_NAME
+                );
+            }
+            for(const field of Object.keys(filters)) {
+                type CategoriesFields = keyof typeof filters;
                 if(field === "categories") {
-                    if(request.body.filters.categories &&
-                        !Array.isArray(request.body.filters.categories)) {
+                    if(filters.categories && !Array.isArray(filters.categories)) {
                             throw new ApiError(
-                                `The filters "categories" field, if provided, must be an array of strings. The provided value was of type "${typeof request.body.filters?.categories}".`,
+                                `The filters "categories" field, if provided, must be an array of strings. The provided value was of type "${typeof filters?.categories}".`,
                                 400,
                                 MODULE_NAME
                             );
                     }
-                }else if(
-                    request.body.filters[field as CategoriesFields] &&
-                    typeof request.body.filters[field as CategoriesFields] !== "string"
+                }else if(filters[field as CategoriesFields] &&
+                    typeof filters[field as CategoriesFields] !== "string"
                 ) {
                     throw new ApiError(
-                        `The filters "${field}" field, if provided, must be a non-empty string. The provided value was of type "${typeof request.body.filters[field as CategoriesFields]}".`,
+                        `The filters "${field}" field, if provided, must be a non-empty string. The provided value was of type "${typeof filters[field as CategoriesFields]}".`,
                         400,
                         MODULE_NAME
                     );
                 }
             }
         }
-        let filter = request.body.filters as BookQueryFilter;
-        if(filter.categories) {
-            filter.categories = { "$all": filter.categories } as any;
+        if(filters.categories) {
+            filters.categories = { "$in": filters.categories };
         }
         let books: Book[];
         if(!request.query.query) {
             books = await Book.queryBooks(
-                request.body.filters,
+                filters,
                 booksToSkip,
                 limit,
-                request.body.sortBy
+                sortBy
             );
         }else {    
             books = await Book.textSearch(
                 request.query.query,
-                request.body.filters,
-                { skip: booksToSkip, limit: limit, sort: request.body.sortBy }
+                filters,
+                { skip: booksToSkip, limit: limit, sort: sortBy }
             );
         }
         response.status(200).json(books.map(book => book.getAllFields()));

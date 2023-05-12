@@ -46,44 +46,69 @@ export default class LoanController extends Controller {
                     MODULE_NAME
                 );
             }
-            if(
-                request.body.loansPerPage &&
-                (typeof request.body.loansPerPage !== "number" || request.body.loansPerPage <= 0)
-            ) {
+            let loansPerPage = (request.query.ipp) ? parseInt(request.query.ipp) : DEFAULT_LOANS_PER_PAGE;
+            if(isNaN(loansPerPage) || loansPerPage <= 0) {
                 throw new ApiError(
-                    `An invalid value was provided to the loansPerPage property! The loansPerPage property must be a positive integer (got value {${request.body.loansPerPage}} of type "${typeof request.body.loansPerPage}").`,
+                    `An invalid value was provided to the loansPerPage property! The loansPerPage property must be a positive integer (got value {${loansPerPage}}).`,
                     400,
                     MODULE_NAME
                 );
             }
-            let loansPerPage = request.body.loansPerPage || DEFAULT_LOANS_PER_PAGE;
             loansToSkip = (page - 1) * loansPerPage;
             limit = loansPerPage;
         }
-        if(request.body.sortBy && typeof request.body.sortBy !== "object") {
-            throw new ApiError(
-                `The sort by property, if provided, must be a valid object. The provided value was of type "${typeof request.body.sortBy}".`,
-                400,
-                MODULE_NAME
-            );
+        let sortBy;
+        if(request.query.sort) {
+            try {
+                sortBy = JSON.parse(decodeURI(request.query.sort));
+            }catch(exception: any) {
+                throw new ApiError(
+                    `The sort property, if provided, must be a JSON string. The provided value was "${decodeURI(request.query.sort)}".`,
+                    400,
+                    MODULE_NAME
+                );
+            }
+            
         }
-        if(request.body.filters) {
-            mongoFilter.reader = request.body.filters.reader;
-            mongoFilter.bookTitle = request.body.filters.bookName;
-            mongoFilter.renew = request.body.filters.renew;
-            if(request.body.filters.loanDate && request.body.filters.loanDate == "") {
-                mongoFilter.loanDate = new Date(request.body.filters.loanDate);
+        if(request.query.filter) {
+            let filters;
+            try {
+                filters = JSON.parse(decodeURI(request.query.filter));
+            }catch(exception: any) {
+                throw new ApiError(
+                    `The filter property, if provided, must be a JSON string. The provided value was "${decodeURI(request.query.filter)}".`,
+                    400,
+                    MODULE_NAME
+                );
             }
-            if(request.body.filters.endDate && request.body.filters.endDate == "") {
-                mongoFilter.endDate = new Date(request.body.filters.endDate);
+            if(filters.reader) {
+                mongoFilter.reader = filters.reader;
             }
-            mongoFilter.late = { $lt: new Date() };
+            if(filters.bookId) {
+                mongoFilter.bookId = Book.getIdFromString(filters.bookId);
+            }
+            if(filters.startDate && filters.startDate == "") {
+                mongoFilter.startDate = new Date(filters.startDate);
+            }
+            if(filters.endDate && filters.endDate == "") {
+                mongoFilter.endDate = new Date(filters.endDate);
+            }
+            if(filters.late !== undefined) {
+                mongoFilter.endDate = (filters.late) ? {
+                    "$lt": new Date()
+                } : {
+                    "$gte": new Date()
+                }
+            }
+            if(filters.renew) {
+                mongoFilter.renew = filters.renew;
+            }
         }
         let loans = await Loan.queryLoans(
             mongoFilter,
             loansToSkip,
             limit,
-            request.body.sortBy
+            sortBy
         );
         response.status(200).json(loans.map((loan) => loan.getAllFields()));
     }

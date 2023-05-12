@@ -20,18 +20,15 @@ export namespace HandlerTypes {
 
     export namespace ListBooks {
         interface QueryParameters {
-            page?: string
-        }
-
-        interface RequestBody {
-            booksPerPage?: number,
-            sortBy?: SortBySchema<BookSchema>
+            page?: string,
+            ipp?: string,
+            sortBy?: string
         }
 
         export type Request = express.Request<
             {},
             BookSchema[],
-            RequestBody,
+            {},
             QueryParameters
         >;
 
@@ -41,24 +38,16 @@ export namespace HandlerTypes {
     export namespace SearchBooks {
         interface QueryParameters {
             query?: string,
-            page?: string
-        }
-
-        interface RequestBody {
-            filters?: {
-                author?: string,
-                categories?: string[],
-                publisher?: string,
-                format?: string
-            },
-            booksPerPage?: number,
-            sortBy?: SortBySchema<BookSchema>
+            page?: string,
+            ipp?: string,
+            filter?: string,
+            sortBy?: string
         }
 
         export type Request = express.Request<
             {},
             BookSchema[],
-            RequestBody,
+            {},
             QueryParameters
         >;
 
