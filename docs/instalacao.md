@@ -122,12 +122,13 @@ Corpo vazio
 
 Essa requisição permite retornar os dados de todos os livros cadastrados no
 sistema com suportando paginação, retornando apenas uma porção da lista de
-livros por vez. O corpo da requisição permite controlar dois parâmetros
-(opcionais) adicionais que são: o número de livros retornados em cada página
-(`booksPerPage`, que possui `10` como valor padrão) e a ordenação das
-informações informadas (alterada informando o nome de qualquer campo
-correspondente a qualquer uma das informações do livro e o valor `1`, para ordem
-crescente, ou `-1`, para ordem decrescente).
+livros por vez. Os parâmetros de consulta (*query parameters*) da requisição
+permitem controlar três opções adicionais que são: a página a ser retornada
+(`page`); o número de livros retornados em cada página (`ipp`, que possui `10`
+como valor padrão) e a ordenação das informações informadas (alterada por meio
+de uma string JSON, informando o nome de qualquer campo correspondente a
+qualquer uma das informações do livro e o valor `1`, para ordem crescente, ou
+`-1`, para ordem decrescente).
 
 ### Requisição
 
@@ -138,13 +139,18 @@ crescente, ou `-1`, para ordem decrescente).
 | Nome | Tipo | Descrição |
 | --- | ------|-------------|
 | page | number | (Opcional) Número da página que deseja recuperar. Se não informado, recupera todos os livros de uma só vez. |
+| ipp | number | (Opcional) Número de itens por página. Se não informado, utiliza um valor pré-definido pelo servidor (20) |
+| sort | string (JSON) | (Opcional) Uma string JSON, representando um objeto que define como os livros devem ser ordenados, estabelecendo uma ordenação para cada campo |
+
+```plain
+Corpo vazio
+```
+
+##### Estrutura do JSON (sort)
 
 ```json
 {
-  "booksPerPage": "number",
-  "sortBy": {
-    "$nomeCampo": "-1 | 1"
-  }
+  "$nomeCampo": "-1 | 1"
 }
 ```
 
@@ -191,17 +197,31 @@ e a ordenação dos resultados, que funciona de maneira análoga.
 | --- | ------|-------------|
 | query | string | (Opcional) Texto que deseja pesquisar nos registros de livros do acervo. Se não informado, apenas os filtros informados no corpo da requisição serão aplicados. |
 | page | number | (Opcional) Número da página que deseja recuperar. Se não informado, recupera todos os livros de uma só vez. |
+| ipp | number | (Opcional) Número de itens por página. Se não informado, utiliza um valor pré-definido pelo servidor (20) |
+| sort | string (JSON) | (Opcional) Uma string JSON, representando um objeto que define como os livros devem ser ordenados, estabelecendo uma ordenação para cada campo |
+| filter | string (JSON) | (Opcional) Uma string JSON, representando um objeto que contém os filtros a serem aplicados
+na busca |
+
+```plain
+Corpo vazio
+```
+
+##### Estrutura do JSON (sort)
 
 ```json
-"filters": {
-    "author": "string",
-    "categories": "string[]",
-    "publisher": "string",
-    "format": "string"
-},
-"booksPerPage": "number",
-"sortBy": {
-    "$nomeCampo": "-1 | 1"
+{
+  "$nomeCampo": "-1 | 1"
+}
+```
+
+##### Esquema do JSON (filter)
+
+```json
+{
+  "author": "string",
+  "categories": "string[]",
+  "publisher": "string",
+  "format": "string"
 }
 ```
 
@@ -404,21 +424,33 @@ também suporta a filtragem dos resultados utilizando os valores dos campos:
 | Nome | Tipo | Descrição |
 | --- | ------|-------------|
 | page | number | (Opcional) Número da página que deseja recuperar. Se não informado, recupera todos os empréstimos de uma só vez. |
+| ipp | number | (Opcional) Número de itens por página. Se não informado, utiliza um valor pré-definido pelo servidor (20) |
+| sort | string (JSON) | (Opcional) Uma string JSON, representando um objeto que define como os empréstimos devem ser ordenados, estabelecendo uma ordenação para cada campo |
+| filter | string (JSON) | (Opcional) Uma string JSON, representando um objeto que contém os filtros a ser aplicado ao conjunto de empréstimos |
+
+```plain
+Corpo vazio
+```
+
+
+##### Estrutura do JSON (sort)
 
 ```json
 {
-  "loansPerPage": "number",
-  "filters": {
-    "reader": "string",
-    "bookName": "string",
-    "loanDate": "string",
-    "endDate": "string",
-    "late": "boolean",
-    "renew": "boolean"
-  }
-  "sortBy": {
-    "$nomeCampo": "-1 | 1"
-  }
+  "$nomeCampo": "-1 | 1"
+}
+```
+
+##### Esquema do JSON (filter)
+
+```json
+{
+  "reader": "string",
+  "bookName": "string",
+  "loanDate": "string",
+  "endDate": "string",
+  "late": "boolean",
+  "renew": "boolean"
 }
 ```
 
