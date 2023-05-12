@@ -22,7 +22,7 @@ export namespace HandlerTypes {
         interface QueryParameters {
             page?: string,
             ipp?: string,
-            sortBy?: string
+            sort?: string
         }
 
         export type Request = express.Request<
@@ -41,7 +41,7 @@ export namespace HandlerTypes {
             page?: string,
             ipp?: string,
             filter?: string,
-            sortBy?: string
+            sort?: string
         }
 
         export type Request = express.Request<

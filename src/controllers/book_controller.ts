@@ -73,15 +73,15 @@ export default class BookController extends Controller {
         }else {
             booksToSkip = limit = 0;
         }
-        if(request.query.sortBy) {
+        if(request.query.sort) {
             try {
-                sort = sortValidator.parse(JSON.parse(decodeURI(request.query.sortBy)));
+                sort = sortValidator.parse(JSON.parse(decodeURI(request.query.sort)));
             }catch(exception: any) {
                 let errorMessage: string;
                 if(exception.name == "ZodError") {
                     errorMessage = `The object provided to the sort property is invalid. The provided value was ${sort}. The following inconsistencies were encountered: ${exception}`;
                 }else {
-                    errorMessage = `The sort parameter, if provided, must be a valid JSON string. The provided value was "${decodeURI(request.query.sortBy)}".`;
+                    errorMessage = `The sort parameter, if provided, must be a valid JSON string. The provided value was "${decodeURI(request.query.sort)}".`;
                 }
                 throw new ApiError(
                     errorMessage,
@@ -154,15 +154,15 @@ export default class BookController extends Controller {
         }else {
             booksToSkip = limit = 0;
         }
-        if(request.query.sortBy) {
+        if(request.query.sort) {
             try {
-                sort = sortValidator.parse(JSON.parse(decodeURI(request.query.sortBy)));
+                sort = sortValidator.parse(JSON.parse(decodeURI(request.query.sort)));
             }catch(exception: any) {
                 let errorMessage: string;
                 if(exception.name == "ZodError") {
                     errorMessage = `The object provided to the sort property is invalid. The provided value was ${sort}. The following inconsistencies were encountered: ${exception}`;
                 }else {
-                    errorMessage = `The sort parameter, if provided, must be a valid JSON string. The provided value was "${decodeURI(request.query.sortBy)}".`;
+                    errorMessage = `The sort parameter, if provided, must be a valid JSON string. The provided value was "${decodeURI(request.query.sort)}".`;
                 }
                 throw new ApiError(
                     errorMessage,
