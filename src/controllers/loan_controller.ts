@@ -37,6 +37,27 @@ export default class LoanController extends Controller {
         let loansToSkip = 0;
         let limit = 0;
         let mongoFilter: LoanQueryFilter = {};
+        const sortValidator = z.object({
+            reader: z.union([z.literal(1), z.literal(-1)]).optional(),
+            phone: z.union([z.literal(1), z.literal(-1)]).optional(),
+            bookId: z.union([z.literal(1), z.literal(-1)]).optional(),
+            bookTitle: z.union([z.literal(1), z.literal(-1)]).optional(),
+            startDate: z.union([z.literal(1), z.literal(-1)]).optional(),
+            endDate: z.union([z.literal(1), z.literal(-1)]).optional(),
+            renew: z.union([z.literal(1), z.literal(-1)]).optional()
+        }).strict();
+        type SortParam = z.infer<typeof sortValidator>;
+        const filterValidator = z.object({
+            reader: z.string().nonempty("A filter string, when provided must not be empty").optional(),
+            bookId: z.custom((data: any) => Book.isValidId(data || ""), { message: "The provided bookId string is not a valid MongoDB ObjectID" }).optional(),
+            startDate: z.date({coerce: true}).optional(),
+            endDate: z.date({coerce: true}).optional(),
+            renew: z.boolean().optional(),
+            late: z.boolean().optional()
+        }).strict();
+        type FilterParam = z.infer<typeof filterValidator>;
+        let sort: SortParam | undefined;
+        let filter: FilterParam | undefined;
         if(request.query.page) {
             let page = parseInt(request.query.page);
             if(isNaN(page) || page <= 0) {
@@ -57,13 +78,18 @@ export default class LoanController extends Controller {
             loansToSkip = (page - 1) * loansPerPage;
             limit = loansPerPage;
         }
-        let sortBy;
         if(request.query.sort) {
             try {
-                sortBy = JSON.parse(decodeURI(request.query.sort));
+                sort = sortValidator.parse(JSON.parse(decodeURI(request.query.sort)));
             }catch(exception: any) {
+                let errorMessage: string;
+                if(exception.name === "ZodError") {
+                    errorMessage = `The object provided to the sort property is invalid. The provided value was ${sort}. The following inconsistencies were encountered: ${exception}`;
+                }else {
+                    errorMessage = `The sort property, if provided, must be a JSON string. The provided value was "${decodeURI(request.query.sort)}".`
+                }
                 throw new ApiError(
-                    `The sort property, if provided, must be a JSON string. The provided value was "${decodeURI(request.query.sort)}".`,
+                    errorMessage,
                     400,
                     MODULE_NAME
                 );
@@ -71,44 +97,49 @@ export default class LoanController extends Controller {
             
         }
         if(request.query.filter) {
-            let filters;
             try {
-                filters = JSON.parse(decodeURI(request.query.filter));
+                filter = filterValidator.parse(JSON.parse(decodeURI(request.query.filter)));
             }catch(exception: any) {
+                let errorMessage: string;
+                if(exception.name === "ZodError") {
+                    errorMessage = `The object provided to the filter property is invalid. The provided value was ${filter}. The following inconsistencies were encountered: ${exception}`;
+                }else {
+                    errorMessage = `The filter property, if provided, must be a JSON string. The provided value was "${decodeURI(request.query.filter)}".`;
+                }
                 throw new ApiError(
-                    `The filter property, if provided, must be a JSON string. The provided value was "${decodeURI(request.query.filter)}".`,
+                    errorMessage,
                     400,
                     MODULE_NAME
                 );
             }
-            if(filters.reader) {
-                mongoFilter.reader = filters.reader;
+            if(filter.reader) {
+                mongoFilter.reader = filter.reader;
             }
-            if(filters.bookId) {
-                mongoFilter.bookId = Book.getIdFromString(filters.bookId);
+            if(filter.bookId) {
+                mongoFilter.bookId = filter.bookId;
             }
-            if(filters.startDate && filters.startDate == "") {
-                mongoFilter.startDate = new Date(filters.startDate);
+            if(filter.startDate) {
+                mongoFilter.startDate = new Date(filter.startDate);
             }
-            if(filters.endDate && filters.endDate == "") {
-                mongoFilter.endDate = new Date(filters.endDate);
+            if(filter.endDate) {
+                mongoFilter.endDate = new Date(filter.endDate);
             }
-            if(filters.late !== undefined) {
-                mongoFilter.endDate = (filters.late) ? {
+            if(filter.late !== undefined) {
+                mongoFilter.endDate = (filter.late) ? {
                     "$lt": new Date()
                 } : {
                     "$gte": new Date()
                 }
             }
-            if(filters.renew) {
-                mongoFilter.renew = filters.renew;
+            if(filter.renew) {
+                mongoFilter.renew = filter.renew;
             }
         }
         let loans = await Loan.queryLoans(
             mongoFilter,
             loansToSkip,
             limit,
-            sortBy
+            sort
         );
         response.status(200).json(loans.map((loan) => loan.getAllFields()));
     }

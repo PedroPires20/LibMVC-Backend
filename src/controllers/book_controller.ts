@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { Controller, DatabaseSettings, HttpMethod } from "./controller";
 import { HandlerTypes } from "./book_controller_types";
-import Book, { BookQueryFilter, BookSchema } from "../models/book";
+import Book, { BookQueryFilter } from "../models/book";
 import { ApiError } from "../helpers/error_handlers";
 
 const MODULE_NAME = "BookController";
@@ -33,6 +33,22 @@ export default class BookController extends Controller {
         request: HandlerTypes.ListBooks.Request,
         response: HandlerTypes.ListBooks.Response
     ) {
+        const sortValidator = z.object({
+            isbn: z.union([z.literal(1), z.literal(-1)]).optional(),
+            title: z.union([z.literal(1), z.literal(-1)]).optional(),
+            author: z.union([z.literal(1), z.literal(-1)]).optional(),
+            categories: z.union([z.literal(1), z.literal(-1)]).optional(),
+            publisher: z.union([z.literal(1), z.literal(-1)]).optional(),
+            edition: z.union([z.literal(1), z.literal(-1)]).optional(),
+            format: z.union([z.literal(1), z.literal(-1)]).optional(),
+            date: z.union([z.literal(1), z.literal(-1)]).optional(),
+            pages: z.union([z.literal(1), z.literal(-1)]).optional(),
+            copies: z.union([z.literal(1), z.literal(-1)]).optional(),
+            description: z.union([z.literal(1), z.literal(-1)]).optional(),
+            location: z.union([z.literal(1), z.literal(-1)]).optional()
+        });
+        type SortParam = z.infer<typeof sortValidator>;
+        let sort: SortParam | undefined;
         let booksToSkip: number;
         let limit: number;
         if(request.query.page) {
@@ -57,19 +73,24 @@ export default class BookController extends Controller {
         }else {
             booksToSkip = limit = 0;
         }
-        let sortBy;
         if(request.query.sortBy) {
             try {
-                sortBy = JSON.parse(decodeURI(request.query.sortBy));
+                sort = sortValidator.parse(JSON.parse(decodeURI(request.query.sortBy)));
             }catch(exception: any) {
+                let errorMessage: string;
+                if(exception.name == "ZodError") {
+                    errorMessage = `The object provided to the sort property is invalid. The provided value was ${sort}. The following inconsistencies were encountered: ${exception}`;
+                }else {
+                    errorMessage = `The sort parameter, if provided, must be a valid JSON string. The provided value was "${decodeURI(request.query.sortBy)}".`;
+                }
                 throw new ApiError(
-                    `The sort by parameter, if provided, must be a valid JSON string. The provided value was "${decodeURI(request.query.sortBy)}".`,
+                    errorMessage,
                     400,
                     MODULE_NAME
                 );
             }
         }
-        let books = await Book.queryBooks({}, booksToSkip, limit, sortBy);
+        let books = await Book.queryBooks({}, booksToSkip, limit, sort);
         response.status(200).json(books.map(book => book.getAllFields()));
     }
 
@@ -77,8 +98,40 @@ export default class BookController extends Controller {
         request: HandlerTypes.SearchBooks.Request,
         response: HandlerTypes.SearchBooks.Response
     ) {
+        const sortValidator = z.object({
+            isbn: z.union([z.literal(1), z.literal(-1)]).optional(),
+            title: z.union([z.literal(1), z.literal(-1)]).optional(),
+            author: z.union([z.literal(1), z.literal(-1)]).optional(),
+            categories: z.union([z.literal(1), z.literal(-1)]).optional(),
+            publisher: z.union([z.literal(1), z.literal(-1)]).optional(),
+            edition: z.union([z.literal(1), z.literal(-1)]).optional(),
+            format: z.union([z.literal(1), z.literal(-1)]).optional(),
+            date: z.union([z.literal(1), z.literal(-1)]).optional(),
+            pages: z.union([z.literal(1), z.literal(-1)]).optional(),
+            copies: z.union([z.literal(1), z.literal(-1)]).optional(),
+            description: z.union([z.literal(1), z.literal(-1)]).optional(),
+            location: z.union([z.literal(1), z.literal(-1)]).optional()
+        });
+        type SortParam = z.infer<typeof sortValidator>;
+        const filterValidator = z.object({
+            isbn: z.string().nonempty().optional(),
+            title: z.string().nonempty().optional(),
+            author: z.string().nonempty().optional(),
+            categories: z.array(z.string().nonempty()).optional(),
+            publisher: z.string().optional(),
+            edition: z.string().optional(),
+            format: z.string().optional(),
+            date: z.string().optional(),
+            pages: z.number().int().nonnegative().optional(),
+            copies: z.number().int().nonnegative().optional(),
+            description: z.string().optional(),
+            location: z.string().optional()
+        });
+        type FilterParam = z.infer<typeof filterValidator>;
         let booksToSkip: number;
         let limit: number;
+        let sort: SortParam | undefined;
+        let filter: FilterParam | undefined;
         if(request.query.page) {
             let page = parseInt(request.query.page);
             if(isNaN(page) || page <= 0) {
@@ -101,66 +154,57 @@ export default class BookController extends Controller {
         }else {
             booksToSkip = limit = 0;
         }
-        let sortBy;
         if(request.query.sortBy) {
             try {
-                sortBy = JSON.parse(decodeURI(request.query.sortBy));
+                sort = sortValidator.parse(JSON.parse(decodeURI(request.query.sortBy)));
             }catch(exception: any) {
+                let errorMessage: string;
+                if(exception.name == "ZodError") {
+                    errorMessage = `The object provided to the sort property is invalid. The provided value was ${sort}. The following inconsistencies were encountered: ${exception}`;
+                }else {
+                    errorMessage = `The sort parameter, if provided, must be a valid JSON string. The provided value was "${decodeURI(request.query.sortBy)}".`;
+                }
                 throw new ApiError(
-                    `The sort by parameter, if provided, must be a valid JSON string. The provided value was "${decodeURI(request.query.sortBy)}".`,
+                    errorMessage,
                     400,
                     MODULE_NAME
                 );
             }
         }
-        let filters;
         if(request.query.filter) {
             try {
-                filters = JSON.parse(decodeURI(request.query.filter))
+                filter = filterValidator.parse(JSON.parse(decodeURI(request.query.filter)));
             }catch(exception: any) {
+                let errorMessage: string;
+                if(exception.name == "ZodError") {
+                    errorMessage = `The object provided to the filter property is invalid. The provided value was ${filter}. The following inconsistencies were encountered: ${exception}`;
+                }else {
+                    errorMessage = `The filter parameter, if provided, must be a valid JSON string. The provided value was "${decodeURI(request.query.filter)}".`;
+                }
                 throw new ApiError(
-                    `The filters parameter, if provided, must be a valid object. The provided value was "${decodeURI(request.query.filter)}".`,
+                    errorMessage,
                     400,
                     MODULE_NAME
                 );
             }
-            for(const field of Object.keys(filters)) {
-                type CategoriesFields = keyof typeof filters;
-                if(field === "categories") {
-                    if(filters.categories && !Array.isArray(filters.categories)) {
-                            throw new ApiError(
-                                `The filters "categories" field, if provided, must be an array of strings. The provided value was of type "${typeof filters?.categories}".`,
-                                400,
-                                MODULE_NAME
-                            );
-                    }
-                }else if(filters[field as CategoriesFields] &&
-                    typeof filters[field as CategoriesFields] !== "string"
-                ) {
-                    throw new ApiError(
-                        `The filters "${field}" field, if provided, must be a non-empty string. The provided value was of type "${typeof filters[field as CategoriesFields]}".`,
-                        400,
-                        MODULE_NAME
-                    );
-                }
-            }
         }
-        if(filters.categories) {
-            filters.categories = { "$in": filters.categories };
+        let mongoFilter: BookQueryFilter = { ...filter };
+        if(mongoFilter?.categories) {
+            mongoFilter.categories = { "$in": mongoFilter.categories } as any;
         }
         let books: Book[];
         if(!request.query.query) {
             books = await Book.queryBooks(
-                filters,
+                filter,
                 booksToSkip,
                 limit,
-                sortBy
+                sort
             );
         }else {    
             books = await Book.textSearch(
                 request.query.query,
-                filters,
-                { skip: booksToSkip, limit: limit, sort: sortBy }
+                filter,
+                { skip: booksToSkip, limit: limit, sort: sort }
             );
         }
         response.status(200).json(books.map(book => book.getAllFields()));
