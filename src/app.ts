@@ -1,5 +1,6 @@
 import express, { Express } from "express";
 import * as dotenv from "dotenv";
+import { enableCors } from "./helpers/enable_cors";
 import { exceptionHandler, notFoundHandler } from "./helpers/error_handlers";
 import { Controller, DatabaseSettings } from "./controllers/controller";
 import BookController from "./controllers/book_controller";
@@ -50,6 +51,7 @@ export default class App {
 
     private _addPreHandlerMiddlewares() {
         this._expressApp.use(express.json());
+        this._expressApp.use(enableCors);
     }
 
     private _bindRoutes() {
