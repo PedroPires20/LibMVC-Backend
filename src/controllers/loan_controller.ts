@@ -49,7 +49,7 @@ export default class LoanController extends Controller {
         type SortParam = z.infer<typeof sortValidator>;
         const filterValidator = z.object({
             reader: z.string().nonempty("A filter string, when provided must not be empty").optional(),
-            bookId: z.custom((data: any) => Book.isValidId(data || ""), { message: "The provided bookId string is not a valid MongoDB ObjectID" }).optional(),
+            bookTitle: z.string().nonempty("A filter string, when provided must not be empty").optional(),
             startDate: z.date({coerce: true}).optional(),
             endDate: z.date({coerce: true}).optional(),
             renew: z.boolean().optional(),
@@ -115,8 +115,8 @@ export default class LoanController extends Controller {
             if(filter.reader) {
                 mongoFilter.reader = filter.reader;
             }
-            if(filter.bookId) {
-                mongoFilter.bookId = filter.bookId;
+            if(filter.bookTitle) {
+                mongoFilter.bookTitle = filter.bookTitle;
             }
             if(filter.startDate) {
                 mongoFilter.startDate = new Date(filter.startDate);
