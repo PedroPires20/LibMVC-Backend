@@ -195,7 +195,7 @@ export default class BookController extends Controller {
         let books: Book[];
         if(!request.query.query) {
             books = await Book.queryBooks(
-                filter,
+                mongoFilter,
                 booksToSkip,
                 limit,
                 sort
@@ -203,7 +203,7 @@ export default class BookController extends Controller {
         }else {    
             books = await Book.textSearch(
                 request.query.query,
-                filter,
+                mongoFilter,
                 { skip: booksToSkip, limit: limit, sort: sort }
             );
         }

@@ -102,7 +102,7 @@ export default class Book extends Model<BookSchema> {
 
     public static async textSearch(
         searchQuery: string,
-        filters: Partial<ExcludeId<BookSchema>> = {},
+        filters: BookQueryFilter = {},
         options?: FindOptions
     ) {
         return this._modelCollection.find({
@@ -112,7 +112,7 @@ export default class Book extends Model<BookSchema> {
                 $caseSensitive: false,
                 $diacriticSensitive: true
             },
-            ...filters
+            ...filters as Filter<Document>
         }, options).map((bookData) => new Book(
             this._modelCollection, bookData as BookSchema)
         ).toArray();
