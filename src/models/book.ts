@@ -12,7 +12,7 @@ export interface BookSchema extends ModelSchema {
     publisher: string,
     edition: string,
     format: string,
-    date: string,
+    date: Date,
     pages: number,
     copies: number | null,
     description: string,
@@ -243,7 +243,7 @@ export default class Book extends Model<BookSchema> {
         return this._date;
     }
     
-    public set date(date: string) {
+    public set date(date: Date) {
         this._date = date;
         this._changeSet.date = date;
     }
@@ -293,7 +293,7 @@ export default class Book extends Model<BookSchema> {
     private _publisher: string;
     private _edition: string;
     private _format: string;
-    private _date: string;
+    private _date: Date;
     private _pages: number;
     private _copies: number;
     private _description: string;
