@@ -237,7 +237,7 @@ export default class BookController extends Controller {
             publisher: z.string(),
             edition: z.string(),
             format: z.string(),
-            date: z.date({ coerce: true }),
+            date: z.date({ coerce: true }).optional(),
             pages: z.number().int().nonnegative(),
             copies: z.number().int().nonnegative(),
             description: z.string(),
@@ -245,6 +245,7 @@ export default class BookController extends Controller {
         });
         let validationResult = bookSchemaValidator.safeParse(request.body);
         if(!validationResult.success) {
+            console.log(validationResult.error.toString());
             throw new ApiError(
                 `The data provided for the creation of the new book is invalid! The following inconsistencies where found: ${validationResult.error.toString()}`,
                 400,
