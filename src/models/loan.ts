@@ -97,6 +97,10 @@ export default class Loan extends Model<LoanSchema> {
         await this.deleteById(this._modelCollection, id);
     }
 
+    public static async deleteLoansByBookId(bookId: ObjectId) {
+        this._modelCollection.deleteMany({ bookId });
+    }
+
     public override getAllFields(): LoanSchema & LoanExtraFields {
         return {
             _id: this.id,

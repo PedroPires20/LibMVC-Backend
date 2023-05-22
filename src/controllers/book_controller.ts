@@ -2,6 +2,7 @@ import { z } from "zod";
 import { Controller, DatabaseSettings, HttpMethod } from "./controller";
 import { HandlerTypes } from "./book_controller_types";
 import Book, { BookQueryFilter } from "../models/book";
+import Loan from "../models/loan";
 import { ApiError } from "../helpers/error_handlers";
 
 const MODULE_NAME = "BookController";
@@ -366,6 +367,7 @@ export default class BookController extends Controller {
         }
         let id = Book.getIdFromString(request.params.id);
         await Book.deleteBookById(id);
+        await Loan.deleteLoansByBookId(id);
         response.status(200).send();
     }
 
