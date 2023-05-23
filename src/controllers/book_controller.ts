@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { Controller, DatabaseSettings, HttpMethod } from "./controller";
 import { HandlerTypes } from "./book_controller_types";
-import Book, { BookQueryFilter } from "../models/book";
+import Book, { BookQueryFilter, BookCreationSchema } from "../models/book";
 import Loan from "../models/loan";
 import { ApiError } from "../helpers/error_handlers";
 
@@ -238,22 +238,32 @@ export default class BookController extends Controller {
             publisher: z.string(),
             edition: z.string(),
             format: z.string(),
-            date: z.date({ coerce: true }).optional(),
+            date: z.date({ coerce: true }).nullable().optional().transform(
+                (date) => (date === null) ? undefined : date
+            ),
             pages: z.number().int().nonnegative(),
             copies: z.number().int().nonnegative(),
             description: z.string(),
             location: z.string()
         });
-        let validationResult = bookSchemaValidator.safeParse(request.body);
-        if(!validationResult.success) {
-            console.log(validationResult.error.toString());
-            throw new ApiError(
-                `The data provided for the creation of the new book is invalid! The following inconsistencies where found: ${validationResult.error.toString()}`,
-                400,
-                MODULE_NAME
-            );
+        let newBookData;
+        try {
+            newBookData = bookSchemaValidator.parse(request.body);
+            console.log(typeof newBookData.date)
+        }catch(exception: any) {
+            let errorMessage: string;
+                if(exception.name == "ZodError") {
+                    errorMessage = `The data provided for the creation of the new book is invalid! The following inconsistencies where found: ${exception}`;
+                }else {
+                    errorMessage = exception.message;
+                }
+                throw new ApiError(
+                    errorMessage,
+                    400,
+                    MODULE_NAME
+                );
         }
-        let newBook = await Book.createBook(request.body);
+        let newBook = await Book.createBook(newBookData);
         response.status(200).json({ createdId: newBook.id });
     }
 
@@ -276,7 +286,7 @@ export default class BookController extends Controller {
             publisher: z.string().optional(),
             edition: z.string().optional(),
             format: z.string().optional(),
-            date: z.date({coerce: true}).optional(),
+            date: z.date({coerce: true}).optional().nullable(),
             pages: z.number().int().nonnegative().optional(),
             copies: z.number().int().nonnegative().optional(),
             description: z.string().optional(),
@@ -320,17 +330,19 @@ export default class BookController extends Controller {
                 }
             }
         }
-        if(request.body.publisher) {
+        if(request.body.publisher || request.body.publisher === "") {
             book.publisher = request.body.publisher;
         }
-        if(request.body.edition) {
+        if(request.body.edition || request.body.edition === "") {
             book.edition = request.body.edition;
         }
-        if(request.body.format) {
+        if(request.body.format || request.body.format === "") {
             book.format = request.body.format;
         }
         if(request.body.date) {
             book.date = request.body.date;
+        }else if(request.body.date === null) {
+            book.date = undefined;
         }
         if(request.body.pages) {
             book.pages = request.body.pages;
@@ -338,10 +350,10 @@ export default class BookController extends Controller {
         if(request.body.copies) {
             book.copies = request.body.copies;
         }
-        if(request.body.description) {
+        if(request.body.description || request.body.description === "") {
             book.description = request.body.description;
         }
-        if(request.body.location) {
+        if(request.body.location || request.body.location === "") {
             book.location = request.body.location;
         }
         try {

@@ -49,8 +49,8 @@ export default class Loan extends Model<LoanSchema> {
     }
 
     public static async createLoan(newLoanData: ExcludeId<LoanSchema>) {
-        let newBookId = await super.addNew(this._modelCollection, newLoanData);
-        return new Loan(this._modelCollection, { _id: newBookId, ...newLoanData });
+        let newLoanId = await super.addNew(this._modelCollection, newLoanData);
+        return new Loan(this._modelCollection, { _id: newLoanId, ...newLoanData });
     }
 
     public static async getLoanById(id: ObjectId) {

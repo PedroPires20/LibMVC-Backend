@@ -12,7 +12,7 @@ export interface BookSchema extends ModelSchema {
     publisher: string,
     edition: string,
     format: string,
-    date: Date,
+    date?: Date | null,
     pages: number,
     copies: number | null,
     description: string,
@@ -20,6 +20,8 @@ export interface BookSchema extends ModelSchema {
 }
 
 export type BookQueryFilter = Filter<ExcludeId<BookSchema>>;
+
+export type BookCreationSchema = ExcludeId<BookSchema>;
 
 const BOOK_FIELD_NAMES = ["isbn", "title", "author", "categories", "publisher", "edition",
     "format", "date", "pages", "copies", "description", "location"] as const;
@@ -37,7 +39,7 @@ export default class Book extends Model<BookSchema> {
         this._publisher = bookData.publisher;
         this._edition = bookData.edition;
         this._format = bookData.format;
-        this._date = bookData.date;
+        this._date = (bookData.date === null) ? undefined : bookData.date;
         this._pages = bookData.pages;
         this._copies = bookData.copies || Infinity;
         this._description = bookData.description;
@@ -158,7 +160,7 @@ export default class Book extends Model<BookSchema> {
             this._publisher = updatedData.publisher;
             this._edition = updatedData.edition;
             this._format = updatedData.format;
-            this._date = updatedData.date;
+            this._date = (updatedData.date === null) ? undefined : updatedData.date;
             this._pages = updatedData.pages;
             this._copies = updatedData.copies || Infinity;
             this._description = updatedData.description;
@@ -243,7 +245,7 @@ export default class Book extends Model<BookSchema> {
         return this._date;
     }
     
-    public set date(date: Date) {
+    public set date(date: Date | undefined) {
         this._date = date;
         this._changeSet.date = date;
     }
@@ -293,7 +295,7 @@ export default class Book extends Model<BookSchema> {
     private _publisher: string;
     private _edition: string;
     private _format: string;
-    private _date: Date;
+    private _date?: Date;
     private _pages: number;
     private _copies: number;
     private _description: string;
