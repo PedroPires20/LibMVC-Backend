@@ -9,7 +9,7 @@ seguir as instruções abaixo:
 
 3. Clone o repositório:
 
-```console git clone https://github.com/PedroPires20/LibMVC-Backend.git```
+```console git clone https://github.com/PedroPires20/SimpleLibrary-Backend.git```
 
 4. Instale as dependências do projeto, executando, a partir do diretório em que clonou o repositório, o seguinte comando:
 
