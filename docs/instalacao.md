@@ -1,6 +1,6 @@
 # Instalação e Execução
 
-Para instalar e executar o *backend* do sistema **LibMVC** em sua máquina, basta
+Para instalar e executar o *backend* do sistema **SimpleLibrary** em sua máquina, basta
 seguir as instruções abaixo:
 
 1. Instale a versão mais recente do Node.js, que pode ser encontrada nesse [link](https://nodejs.org/en/download).
@@ -21,7 +21,7 @@ do MongoDB pode ser encontrado:
 ```env
 MONGO_URL="URL do seu servidor do MongoDB"
 MONGO_PORT="Porta utilizada pelo MongoDB"
-MONGO_DATABASE="Nome do banco de dados a ser criado para utilização pelo LibMVC"
+MONGO_DATABASE="Nome do banco de dados a ser criado para utilização pelo SimpleLibrary"
 ```
 
 ## Execução
@@ -36,7 +36,7 @@ variável `PORT` no seu arquivo `.env`, com o número de porta desejado.
 
 # Utilização (*Endpoints*)
 
-Conforme mencionado anteriormente, o *backend* do **LibMVC** é implementado como
+Conforme mencionado anteriormente, o *backend* do **SimpleLibrary** é implementado como
 uma API REST e, sendo assim, as operações que dão suporte às funcionalidades são
 acessadas pelo *frontend* via requisições HTTP. Cada uma das operações
 disponibilizadas pelo *backend*, seus *endpoints*, bem como o formato das requisições

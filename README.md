@@ -1,6 +1,6 @@
-# LibMVC (Backend)
+# SimpleLibrary (Backend)
 
-O **LibMVC** é um sistema mínimo para gerenciamento de bibliotecas, que conta
+O **SimpleLibrary** é um sistema mínimo para gerenciamento de bibliotecas, que conta
 com funcionalidades para gerenciamento do acervo de uma biblioteca e dos
 empréstimos realizados por esta. O sistema apresenta uma interface simples, em
 formato de tabela, que permite ao usuário:
@@ -37,7 +37,7 @@ Graduação em Ciência da Computação (Projeto Orientado em Computação), na
 Universidade Federal de Minas Gerais (UFMG).
 
 Este repositório contém apenas o código desenvolvido para implementação do
-*backend* do sistema **LibMVC**, que consiste em uma API REST baseada em
+*backend* do sistema **SimpleLibrary**, que consiste em uma API REST baseada em
 documentos JSON (utilizados para a troca de informações entre o *frontend* e o
 *backend*). Essa API será consumida pelas diferentes implementações do
 *frontend*, cujos códigos estão armazenados em um repositório dedicado, que pode
@@ -63,7 +63,7 @@ por meio de variáveis de ambiente
 
 ## Instalação e Utilização
 
-Instruções para instalação e utilização do *backend* do **LibMVC**, incluindo
+Instruções para instalação e utilização do *backend* do **SimpleLibrary**, incluindo
 um detalhamento de todos os *endpoints* disponibilizados pela API podem ser
 encontradas nesse [link](./docs/instalacao.md).
 

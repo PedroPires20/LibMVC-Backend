@@ -1,7 +1,7 @@
 {
-  "name": "libmvc-backend",
+  "name": "simplelibrary-backend",
   "version": "1.0.0",
-  "description": "This package contains the implementation of the backend for the LibMVC project (a simple Node.js application implementing a REST API returning JSON documents). The package is written in TypeScript using the Express.js framework and uses MongoDB as the database management system.",
+  "description": "This package contains the implementation of the backend for the SimpleLibrary project (a simple Node.js application implementing a REST API returning JSON documents). The package is written in TypeScript using the Express.js framework and uses MongoDB as the database management system.",
   "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -17,7 +17,7 @@
     "url": "git+https://github.com/PedroPires20/LibMVC-Backend.git"
   },
   "keywords": [
-    "LibMVC",
+    "SimpleLibrary",
     "backend",
     "POC",
     "Final",
