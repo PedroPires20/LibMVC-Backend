@@ -132,11 +132,11 @@ export default class Loan extends Model<LoanSchema> {
     }
 
     public get duration() {
-        return Math.trunc((this._endDate.getTime() - this._startDate.getTime()) / MILLISECONDS_PER_DAY);
+        return Math.ceil((this._endDate.getTime() - this._startDate.getTime()) / MILLISECONDS_PER_DAY);
     }
 
     public get daysRemaining() {
-        return Math.trunc((this._endDate.getTime() - Date.now()) / MILLISECONDS_PER_DAY);
+        return Math.ceil((this._endDate.getTime() - Date.now()) / MILLISECONDS_PER_DAY);
     }
 
     public get late() {
