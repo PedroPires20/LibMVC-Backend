@@ -119,19 +119,31 @@ export default class LoanController extends Controller {
                 mongoFilter.bookTitle = filter.bookTitle;
             }
             if(filter.startDate) {
-                mongoFilter.startDate = new Date(filter.startDate);
+                let nextDay = new Date(filter.startDate);
+                nextDay.setDate(nextDay.getDate() + 1);
+                mongoFilter.startDate = {
+                    $gte: filter.startDate,
+                    $lt: nextDay,
+                };
             }
             if(filter.endDate) {
-                mongoFilter.endDate = new Date(filter.endDate);
+                let nextDay = new Date(filter.endDate);
+                nextDay.setDate(nextDay.getDate() + 1);
+                mongoFilter.endDate = {
+                    $gte: filter.endDate,
+                    $lt: nextDay
+                };
             }
             if(filter.late !== undefined) {
+                let today = new Date();
+                today.setHours(0, 0, 0);
                 mongoFilter.endDate = (filter.late) ? {
-                    "$lt": new Date()
+                    $lt: today
                 } : {
-                    "$gte": new Date()
-                }
+                    $gte: today
+                };
             }
-            if(filter.renew) {
+            if(filter.renew !== undefined) {
                 mongoFilter.renew = filter.renew;
             }
         }
@@ -166,20 +178,28 @@ export default class LoanController extends Controller {
         const createBodyValidator = z.object({
             reader: z.string().nonempty("The reader's name must not be empty"),
             phone: z.string().nonempty().regex(/\(\d{2,5}\)\s+9?\d{4}-?\d{4}/, "Invalid phone number format"),
-            bookId: z.custom((data: any) => Book.isValidId(data || ""), { message: "The provided bookId string is not a valid MongoDB ObjectID" }),
-            startDate: z.date({coerce: true}),
+            bookId: z.custom<string>((data: any) => Book.isValidId(data || ""), { message: "The provided bookId string is not a valid MongoDB ObjectID" }),
+            startDate: z.date({coerce: true}).transform((date) => new Date(date.setHours(0, 0, 0))),
             duration: z.number().int().positive("The duration must me a positive integer"),
             renew: z.boolean().default(false)
         }).strict();
-        let validationResult = createBodyValidator.safeParse(request.body);
-        if(!validationResult.success) {
-            throw new ApiError(
-                `The data provided for the creation of the new loan is invalid! The following inconsistencies where found: ${validationResult.error}`,
-                400,
-                MODULE_NAME
-            );
+        let loanCreateData;
+        try {
+            loanCreateData = createBodyValidator.parse(request.body);
+        }catch(exception: any) {
+            let errorMessage: string;
+                if(exception.name == "ZodError") {
+                    errorMessage = `The data provided for the creation of the new loan is invalid! The following inconsistencies where found: ${exception}`;
+                }else {
+                    errorMessage = exception.message;
+                }
+                throw new ApiError(
+                    errorMessage,
+                    400,
+                    MODULE_NAME
+                );
         }
-        let loanedBook = await Book.getBookById(Book.getIdFromString(request.body.bookId as string));
+        let loanedBook = await Book.getBookById(Book.getIdFromString(loanCreateData.bookId));
         if(loanedBook.copies <= 0) {
             throw new ApiError(
                 `The book requested for the new loan has no available units. BookId = "${request.body.bookId}`,
@@ -188,17 +208,16 @@ export default class LoanController extends Controller {
             );
         }
         loanedBook.copies--;
-        let startDate = new Date(request.body.startDate as string);
-        let endDate = new Date(startDate.getTime());
-        endDate.setDate(startDate.getDate() + (request.body.duration as number))
+        let endDate = new Date(loanCreateData.startDate.getTime());
+        endDate.setDate(loanCreateData.startDate.getDate() + loanCreateData.duration)
         let newLoanData: LoanCreationSchema = {
-            reader: request.body.reader as string,
-            phone: request.body.phone as string,
+            reader: loanCreateData.reader as string,
+            phone: loanCreateData.phone as string,
             bookId: loanedBook.id,
             bookTitle: loanedBook.title,
-            startDate: startDate,
+            startDate: loanCreateData.startDate,
             endDate: endDate,
-            renew: request.body.renew as boolean
+            renew: loanCreateData.renew as boolean
         }
         let newLoan = await Loan.createLoan(newLoanData);
         await loanedBook.commitChanges();

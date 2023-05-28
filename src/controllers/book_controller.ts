@@ -249,7 +249,6 @@ export default class BookController extends Controller {
         let newBookData;
         try {
             newBookData = bookSchemaValidator.parse(request.body);
-            console.log(typeof newBookData.date)
         }catch(exception: any) {
             let errorMessage: string;
                 if(exception.name == "ZodError") {
