@@ -17,7 +17,7 @@ aplicação filtros, à informações como:
   - Empréstimos realizados para um determinado leitor
   - Empréstimos feitos ou que vencem em uma determinada data
   - Empréstimos que estão atrasados
-  - Empréstimos que são renovações (i.e., extendem o prazo de um empréstimo
+  - Empréstimos que são renovações (i.e., estendem o prazo de um empréstimo
     anterior);
 - Atualizar informações de um empréstimo;
 - Finalizar um empréstimo.
@@ -41,7 +41,7 @@ Este repositório contém apenas o código desenvolvido para implementação do
 documentos JSON (utilizados para a troca de informações entre o *frontend* e o
 *backend*). Essa API será consumida pelas diferentes implementações do
 *frontend*, cujos códigos estão armazenados em um repositório dedicado, que pode
-ser encontrado nesse [link]().
+ser encontrado nesse [link](https://github.com/PedroPires20/SimpleLibrary-Frontend).
 
 ## Tecnologias
 
