@@ -9,20 +9,29 @@ seguir as instruções abaixo:
 
 3. Clone o repositório:
 
-```console git clone https://github.com/PedroPires20/SimpleLibrary-Backend.git```
+    ```console git clone https://github.com/PedroPires20/SimpleLibrary-Backend.git```
 
 4. Instale as dependências do projeto, executando, a partir do diretório em que clonou o repositório, o seguinte comando:
 
-```console npm install```
+    ```console npm install```
 
 5. Crie, no diretório raiz do código, um arquivo `.env` e defina as seguintes variáveis, informando onde o servidor
 do MongoDB pode ser encontrado:
 
-```env
-MONGO_URL="URL do seu servidor do MongoDB"
-MONGO_PORT="Porta utilizada pelo MongoDB"
-MONGO_DATABASE="Nome do banco de dados a ser criado para utilização pelo SimpleLibrary"
-```
+    ```env
+    MONGO_URL="URL do seu servidor do MongoDB"
+    MONGO_PORT="Porta utilizada pelo MongoDB"
+    MONGO_DATABASE="Nome do banco de dados a ser criado para utilização pelo SimpleLibrary"
+    ```
+
+6. Inicialize o banco de dados utilizando o script fornecido no diretório
+`database` (esse passo é necessário para criar os índices utilizados pela busca
+textual e pelos filtros nos livros). Basta executar o seguinte comando no shell
+do MongoDB a partir do diretório raiz desse repositório:
+
+    ```javascript
+      load("database/initialize_database.js")
+    ```
 
 ## Execução
 
@@ -564,4 +573,3 @@ Corpo vazio
 ```plain
 Corpo vazio
 ```
-
