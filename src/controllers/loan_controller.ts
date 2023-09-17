@@ -296,7 +296,7 @@ export default class LoanController extends Controller {
             loan.startDate = newStartDate;
             loan.endDate = newEndDate;
         }
-        if(request.body.renew) {
+        if(typeof request.body.renew !== "undefined") {
             loan.renew = request.body.renew;
         }
         try {
